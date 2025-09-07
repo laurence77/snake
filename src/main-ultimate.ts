@@ -57,6 +57,13 @@ class UltimateSnakeScene extends Phaser.Scene {
   private levelText!: Phaser.GameObjects.Text;
   private coinsText!: Phaser.GameObjects.Text;
   private effectsContainer!: Phaser.GameObjects.Container;
+  private comboText!: Phaser.GameObjects.Text;
+  
+  // Combo/bonus system
+  private comboCount: number = 0;
+  private comboTimeLeft: number = 0; // ms remaining to continue combo
+  private readonly comboWindow: number = 2500; // ms window between foods
+  private maxCombo: number = 1;
   
   // Visual elements
   private graphics!: Phaser.GameObjects.Graphics;
@@ -248,6 +255,16 @@ class UltimateSnakeScene extends Phaser.Scene {
     
     // Active effects container
     this.effectsContainer = this.add.container(10, 70);
+    
+    // Combo indicator (hidden until active)
+    this.comboText = this.add.text(WIDTH / 2, 40, '', {
+      fontSize: '20px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#fbbf24',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5, 0);
+    this.comboText.setVisible(false);
     
     // Add target score if level has one
     if (this.currentLevel.targetScore) {
@@ -447,6 +464,15 @@ class UltimateSnakeScene extends Phaser.Scene {
     effectsToRemove.forEach(id => this.activeEffects.delete(id));
     
     this.updateEffectsDisplay();
+
+    // Combo timer
+    if (this.comboCount > 0) {
+      this.comboTimeLeft -= deltaTime;
+      if (this.comboTimeLeft <= 0) {
+        this.comboCount = 0;
+        this.comboTimeLeft = 0;
+      }
+    }
   }
   
   private removeEffect(effectId: string, effect: FoodEffect): void {
@@ -684,8 +710,14 @@ class UltimateSnakeScene extends Phaser.Scene {
     const foodId = this.foodSystem.getAllFoods().findIndex(f => f === food).toString();
     const consumeResult = this.foodSystem.consumeFood(foodId);
     
+    // Update combo and apply multiplier to points
+    this.comboCount += 1;
+    this.maxCombo = Math.max(this.maxCombo, this.comboCount);
+    this.comboTimeLeft = this.comboWindow;
+    const multiplier = Math.min(2.5, 1 + (this.comboCount - 1) * 0.2);
+    const awardedPoints = Math.max(0, Math.floor(consumeResult.points * multiplier));
     // Add score
-    this.score += consumeResult.points;
+    this.score += awardedPoints;
     
     // Add coins if applicable
     if (consumeResult.coins) {
@@ -703,6 +735,25 @@ class UltimateSnakeScene extends Phaser.Scene {
     
     // Create visual effect
     this.animationManager.animateFoodConsumption(food.x, food.y, food.type);
+    if (awardedPoints > 0) {
+      const worldX = food.x * TILE + TILE / 2;
+      const worldY = food.y * TILE + TILE / 2;
+      const t = this.add.text(worldX, worldY, `+${awardedPoints}${multiplier > 1 ? ` x${this.comboCount}` : ''}`, {
+        fontSize: '16px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#fbbf24',
+        stroke: '#000000',
+        strokeThickness: 2
+      }).setOrigin(0.5);
+      this.tweens.add({
+        targets: t,
+        y: worldY - 30,
+        alpha: 0,
+        duration: 800,
+        ease: 'Quad.easeOut',
+        onComplete: () => t.destroy()
+      });
+    }
     
     // Handle special food types
     this.handleSpecialFoodEffects(food.type);
@@ -804,6 +855,9 @@ class UltimateSnakeScene extends Phaser.Scene {
         this.invincible = false;
       });
     }
+    // Reset combo on collision
+    this.comboCount = 0;
+    this.comboTimeLeft = 0;
   }
   
   private checkLevelCompletion(): void {
@@ -823,6 +877,32 @@ class UltimateSnakeScene extends Phaser.Scene {
     this.gameState.experience += this.currentLevel.rewards.experience;
     this.gameState.statistics.levelsCompleted++;
     this.gameState.statistics.totalScore += this.score;
+    
+    // Bonuses at completion
+    const livesBonus = this.lives * 50; // points
+    if (livesBonus > 0) {
+      this.score += livesBonus;
+      const t1 = this.add.text(WIDTH / 2, HEIGHT / 2 + 120, `Lives Bonus +${livesBonus}` , {
+        fontSize: '18px', color: '#fbbf24', fontFamily: 'Arial, sans-serif', stroke: '#000', strokeThickness: 3
+      }).setOrigin(0.5);
+      this.tweens.add({ targets: t1, y: t1.y - 30, alpha: 0, duration: 1200, ease: 'Quad.easeOut', onComplete: () => t1.destroy() });
+    }
+    if (this.maxCombo >= 5) {
+      const comboBonus = this.maxCombo * 10;
+      this.score += comboBonus;
+      const t2 = this.add.text(WIDTH / 2, HEIGHT / 2 + 150, `Combo Bonus x${this.maxCombo} +${comboBonus}` , {
+        fontSize: '18px', color: '#fbbf24', fontFamily: 'Arial, sans-serif', stroke: '#000', strokeThickness: 3
+      }).setOrigin(0.5);
+      this.tweens.add({ targets: t2, y: t2.y - 30, alpha: 0, duration: 1200, ease: 'Quad.easeOut', onComplete: () => t2.destroy() });
+    }
+    if (this.lives === 3) {
+      this.coins += 20;
+      this.gameState.coins += 20;
+      const t3 = this.add.text(WIDTH / 2, HEIGHT / 2 + 180, `Perfect Run +20 Coins` , {
+        fontSize: '18px', color: '#fbbf24', fontFamily: 'Arial, sans-serif', stroke: '#000', strokeThickness: 3
+      }).setOrigin(0.5);
+      this.tweens.add({ targets: t3, y: t3.y - 30, alpha: 0, duration: 1200, ease: 'Quad.easeOut', onComplete: () => t3.destroy() });
+    }
     
     // Show completion screen after a delay
     this.time.delayedCall(3000, () => {
@@ -1039,6 +1119,13 @@ class UltimateSnakeScene extends Phaser.Scene {
     this.scoreText.setText(`Score: ${this.score}`);
     this.livesText.setText(`Lives: ${this.lives}`);
     this.coinsText.setText(`Coins: ${this.coins}`);
+    // Combo display
+    if (this.comboCount > 1) {
+      this.comboText.setText(`Combo x${this.comboCount}`);
+      this.comboText.setVisible(true);
+    } else {
+      this.comboText.setVisible(false);
+    }
     
     // Update lives text color based on remaining lives
     if (this.lives <= 1) {
