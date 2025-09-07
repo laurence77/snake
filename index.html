@@ -2,14 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta http-equiv="refresh" content="0; url=public/index.html" />
+    <meta http-equiv="refresh" content="0; url=public/landing.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Redirecting…</title>
+    <title>Snake Classic - Loading...</title>
     <link rel="icon" type="image/png" href="assets/icons/apple.png">
-    <style>html,body{height:100%;margin:0;background:#0b0d10;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Arial,Helvetica,sans-serif}</style>
+    <style>html,body{height:100%;margin:0;background:linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-family:Arial,Helvetica,sans-serif;text-align:center}.loading{animation:pulse 2s infinite}@keyframes pulse{0%,100%{opacity:0.7}50%{opacity:1}}</style>
   </head>
   <body>
-    <div>Redirecting to <a href="public/index.html">public/index.html</a>…</div>
-    <script>location.replace('public/index.html');</script>
+    <div class="loading">
+      <h1>🐍 Snake Classic</h1>
+      <p>Loading the ultimate snake experience...</p>
+      <p><a href="public/landing.html" style="color:#fbbf24">Enter Game</a></p>
+    </div>
+    <script>setTimeout(()=>location.replace('public/landing.html'), 1000);</script>
   </body>
 </html>
