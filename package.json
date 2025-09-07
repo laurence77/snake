@@ -15,8 +15,12 @@
     "dev": "esbuild src/main.ts --bundle --outfile=public/bundle.js --servedir=public --sourcemap --watch",
     "dev:enhanced": "esbuild src/main-enhanced.ts --bundle --outfile=public/bundle.js --servedir=public --sourcemap --watch",
     "dev:ultimate": "esbuild src/main-ultimate.ts --bundle --outfile=public/bundle.js --servedir=public --sourcemap --watch",
-    "build": "esbuild src/main.ts --bundle --outfile=public/bundle.js --minify --sourcemap",
-    "build:enhanced": "esbuild src/main-enhanced.ts --bundle --outfile=public/bundle.js --minify --sourcemap",
-    "build:ultimate": "esbuild src/main-ultimate.ts --bundle --outfile=public/bundle.js --minify --sourcemap"
+    "build": "npm run build:js && npm run build:assets",
+    "build:enhanced": "npm run build:enhanced:js && npm run build:assets",
+    "build:ultimate": "npm run build:ultimate:js && npm run build:assets",
+    "build:js": "esbuild src/main.ts --bundle --outfile=public/bundle.js --minify --sourcemap",
+    "build:enhanced:js": "esbuild src/main-enhanced.ts --bundle --outfile=public/bundle.js --minify --sourcemap",
+    "build:ultimate:js": "esbuild src/main-ultimate.ts --bundle --outfile=public/bundle.js --minify --sourcemap",
+    "build:assets": "cp manifest.webmanifest public/ 2>/dev/null || true"
   }
 }
