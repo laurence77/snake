@@ -124,6 +124,7 @@ export interface GameStatistics {
   levelsCompleted: number;
   longestSnake: number;
   perfectRuns: number;       // Levels completed without taking damage
+  bestCombo: number;         // Highest combo achieved
 }
 
 export enum StoreItemType {

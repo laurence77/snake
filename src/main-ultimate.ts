@@ -62,8 +62,9 @@ class UltimateSnakeScene extends Phaser.Scene {
   // Combo/bonus system
   private comboCount: number = 0;
   private comboTimeLeft: number = 0; // ms remaining to continue combo
-  private readonly comboWindow: number = 2500; // ms window between foods
+  private readonly comboWindow: number = 2200; // ms window between foods (tweakable)
   private maxCombo: number = 1;
+  private readonly comboMilestones: number[] = [5, 10];
   
   // Visual elements
   private graphics!: Phaser.GameObjects.Graphics;
@@ -714,7 +715,15 @@ class UltimateSnakeScene extends Phaser.Scene {
     this.comboCount += 1;
     this.maxCombo = Math.max(this.maxCombo, this.comboCount);
     this.comboTimeLeft = this.comboWindow;
-    const multiplier = Math.min(2.5, 1 + (this.comboCount - 1) * 0.2);
+    // Persist best combo in stats
+    if (this.gameState.statistics.bestCombo === undefined || this.comboCount > this.gameState.statistics.bestCombo) {
+      this.gameState.statistics.bestCombo = this.comboCount;
+    }
+    // Milestone flair
+    if (this.comboMilestones.includes(this.comboCount)) {
+      this.onComboMilestone(this.comboCount);
+    }
+    const multiplier = this.getComboMultiplier(this.comboCount);
     const awardedPoints = Math.max(0, Math.floor(consumeResult.points * multiplier));
     // Add score
     this.score += awardedPoints;
@@ -763,6 +772,27 @@ class UltimateSnakeScene extends Phaser.Scene {
     
     // Update statistics
     this.updateFoodStatistics(food.type);
+  }
+
+  private getComboMultiplier(count: number): number {
+    // Non-linear curve; tweak values to taste
+    const curve = [1.0, 1.15, 1.3, 1.5, 1.75, 2.0, 2.2, 2.35, 2.45, 2.5];
+    const idx = Math.max(1, count) - 1;
+    return curve[Math.min(idx, curve.length - 1)];
+  }
+
+  private onComboMilestone(count: number): void {
+    // Flash + chime + banner text
+    this.animationManager.flashScreen(0xfbbf24, 0.6, 180);
+    this.soundManager.playSound('power_up');
+    const t = this.add.text(WIDTH / 2, HEIGHT / 2 - 100, `Combo x${count}!`, {
+      fontSize: '28px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#fbbf24',
+      stroke: '#000000',
+      strokeThickness: 4
+    }).setOrigin(0.5);
+    this.tweens.add({ targets: t, y: t.y - 30, alpha: 0, duration: 1000, ease: 'Back.easeOut', onComplete: () => t.destroy() });
   }
   
   private applyFoodEffect(effect: FoodEffect): void {
@@ -1313,6 +1343,8 @@ class UltimateSnakeScene extends Phaser.Scene {
         levelsCompleted: 0,
         longestSnake: 3,
         perfectRuns: 0
+        ,
+        bestCombo: 0
       }
     };
   }

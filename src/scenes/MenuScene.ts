@@ -539,7 +539,8 @@ export class MenuScene extends Phaser.Scene {
         },
         levelsCompleted: 0,
         longestSnake: 3,
-        perfectRuns: 0
+        perfectRuns: 0,
+        bestCombo: 0
       }
     };
   }
