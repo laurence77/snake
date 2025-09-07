@@ -36,6 +36,7 @@ export class MenuScene extends Phaser.Scene {
     this.createTitle();
     this.createCoinDisplay();
     this.createProgressBar();
+    this.createBestComboDisplay();
     this.createLevelGrid();
     this.createNavigationButtons();
     this.createMenuButtons();
@@ -153,6 +154,22 @@ export class MenuScene extends Phaser.Scene {
         fontSize: '16px',
         fontFamily: 'Arial, sans-serif',
         color: '#cccccc'
+      }
+    ).setOrigin(0.5);
+  }
+
+  private createBestComboDisplay(): void {
+    const best = this.gameState.statistics.bestCombo || 0;
+    this.add.text(
+      this.scale.width / 2,
+      150,
+      `Best Combo: x${best}`,
+      {
+        fontSize: '16px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#fbbf24',
+        stroke: '#000000',
+        strokeThickness: 2
       }
     ).setOrigin(0.5);
   }

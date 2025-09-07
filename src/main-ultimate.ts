@@ -125,8 +125,22 @@ class UltimateSnakeScene extends Phaser.Scene {
     this.setupInput();
     this.createVisualElements();
     
-    // Start background music only after a user gesture (autoplay policy)
+    // Show a small prompt to enable audio to comply with autoplay policy
+    const audioOverlay = this.add.container(0, 0);
+    const g = this.add.graphics();
+    g.fillStyle(0x000000, 0.5);
+    g.fillRect(0, 0, WIDTH, HEIGHT);
+    const prompt = this.add.text(WIDTH / 2, HEIGHT - 60, 'Tap to enable audio', {
+      fontSize: '16px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#ffff00',
+      backgroundColor: '#000000',
+      padding: { x: 8, y: 4 }
+    }).setOrigin(0.5);
+    audioOverlay.add([g, prompt]);
+    
     const enableAudio = () => {
+      audioOverlay.destroy();
       // Unlock Phaser sound manager if locked (Chrome autoplay policy)
       if ((this.sound as any).locked) {
         (this.sound as any).unlock();
@@ -982,7 +996,7 @@ class UltimateSnakeScene extends Phaser.Scene {
     const statsText = this.add.text(
       WIDTH / 2,
       HEIGHT / 2 - 20,
-      `Score: ${this.score}\nCoins Earned: ${this.currentLevel.rewards.coins}\nXP Gained: ${this.currentLevel.rewards.experience}`,
+      `Score: ${this.score}\nCoins Earned: ${this.currentLevel.rewards.coins}\nXP Gained: ${this.currentLevel.rewards.experience}\nBest Combo (this level): x${this.maxCombo}\nAll-time Best Combo: x${this.gameState.statistics.bestCombo || 0}`,
       {
         fontSize: '18px',
         fontFamily: 'Arial, sans-serif',
