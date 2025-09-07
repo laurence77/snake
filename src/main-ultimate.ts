@@ -100,6 +100,9 @@ class UltimateSnakeScene extends Phaser.Scene {
     this.obstacles = [...level.obstacles];
     this.step = this.baseStep;
     this.score = 0;
+    // Ensure each level starts with full lives
+    this.lives = 3;
+    if (this.gameState) this.gameState.lives = 3;
     this.gameOver = false;
     this.levelCompleted = false;
     this.paused = false;
