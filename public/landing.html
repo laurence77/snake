@@ -337,6 +337,26 @@
             min-height: 36px;
         }
     </style>
+    <style>
+        /* Fallback for browsers without backdrop-filter support */
+        @supports not ((-webkit-backdrop-filter: blur(0)) or (backdrop-filter: blur(0))) {
+            .game-icon,
+            .feature-card,
+            .stat-card {
+                background: rgba(255, 255, 255, 0.2);
+            }
+
+            .features,
+            .stats-section {
+                background: rgba(255, 255, 255, 0.08);
+            }
+
+            .install-banner {
+                background: var(--primary-color);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+            }
+        }
+    </style>
 </head>
 <body>
     <header>
