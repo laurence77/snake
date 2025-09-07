@@ -59,6 +59,13 @@ export class SettingsScene extends Phaser.Scene {
           const order: Array<'easy' | 'normal' | 'hard'> = ['easy', 'normal', 'hard'];
           const idx = order.indexOf(this.gameState.settings.difficulty);
           this.gameState.settings.difficulty = order[(idx + 1) % order.length];
+          // Auto-adjust lives persistence based on difficulty
+          // Easy/Normal: reset each level; Hard: persist
+          if (this.gameState.settings.difficulty === 'hard') {
+            this.gameState.settings.persistLives = true;
+          } else {
+            this.gameState.settings.persistLives = false;
+          }
         }
       },
       {
