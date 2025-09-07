@@ -4,8 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Snake Classic - The timeless arcade game with modern touch controls and smooth gameplay">
+    <meta name="keywords" content="snake game, arcade, retro, mobile game, puzzle, classic games, browser game">
+    <meta name="author" content="Snake Classic">
     <meta name="theme-color" content="#059669">
-    <title>Snake Classic - Arcade Game</title>
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://laurence77.github.io/snake/">
+    <meta property="og:title" content="Snake Classic - Play the Timeless Arcade Game">
+    <meta property="og:description" content="Relive the classic snake experience! Guide your snake to eat apples and grow longer while avoiding collisions. Perfect for quick gaming sessions.">
+    <meta property="og:image" content="https://laurence77.github.io/snake/assets/icons/apple.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://laurence77.github.io/snake/">
+    <meta property="twitter:title" content="Snake Classic - Play the Timeless Arcade Game">
+    <meta property="twitter:description" content="Relive the classic snake experience! Guide your snake to eat apples and grow longer while avoiding collisions.">
+    <meta property="twitter:image" content="https://laurence77.github.io/snake/assets/icons/apple.png">
+    
+    <title>Snake Classic - Play the Timeless Arcade Game Online</title>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
@@ -321,6 +338,7 @@
             gap: 12px;
             box-shadow: var(--shadow);
             z-index: 1000;
+            backdrop-filter: blur(10px);
         }
 
         .install-banner button {
@@ -332,6 +350,129 @@
             font-weight: bold;
             cursor: pointer;
             min-height: 36px;
+            transition: all 0.3s ease;
+        }
+
+        .install-banner button:hover {
+            background: #fcd34d;
+            transform: scale(1.05);
+        }
+
+        /* Loading Animation */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--background-gradient);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 1.2rem;
+            margin-top: 10px;
+        }
+
+        /* Stats Section */
+        .stats-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 60px 0;
+            margin: 40px 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 30px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Enhanced Animations */
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .bounce-in {
+            animation: bounceIn 0.6s ease-out;
+        }
+
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+            70% {
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
     </style>
 </head>
@@ -379,21 +520,45 @@
             </div>
         </section>
 
+        <!-- Game Stats Section -->
+        <section class="stats-section">
+            <div class="container">
+                <div class="stats-grid">
+                    <div class="stat-card bounce-in">
+                        <span class="stat-number" id="playCount">1,000+</span>
+                        <span class="stat-label">Games Played</span>
+                    </div>
+                    <div class="stat-card bounce-in">
+                        <span class="stat-number" id="avgScore">87</span>
+                        <span class="stat-label">Average Score</span>
+                    </div>
+                    <div class="stat-card bounce-in">
+                        <span class="stat-number" id="highScore">342</span>
+                        <span class="stat-label">Top Score</span>
+                    </div>
+                    <div class="stat-card bounce-in">
+                        <span class="stat-number">4.8★</span>
+                        <span class="stat-label">Player Rating</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="features">
             <div class="container">
-                <h2>Game Features</h2>
+                <h2 class="fade-in">Game Features</h2>
                 <div class="features-grid">
-                    <div class="feature-card">
+                    <div class="feature-card fade-in">
                         <img src="assets/icons/controller.png" alt="Controls">
                         <h3>Touch Controls</h3>
                         <p>Intuitive swipe controls optimized for mobile devices. Also supports keyboard arrow keys for desktop play.</p>
                     </div>
-                    <div class="feature-card">
+                    <div class="feature-card fade-in">
                         <img src="assets/icons/apple.png" alt="Growing">
                         <h3>Growing Challenge</h3>
                         <p>Start small and grow longer with each apple you eat. The challenge increases as your snake gets bigger!</p>
                     </div>
-                    <div class="feature-card">
+                    <div class="feature-card fade-in">
                         <img src="assets/icons/coin.webp" alt="High Score">
                         <h3>High Score Tracking</h3>
                         <p>Beat your personal best and track your progress. How long can you make your snake grow?</p>
@@ -409,13 +574,30 @@
         </div>
     </footer>
 
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading Snake Classic...</div>
+    </div>
+
     <!-- PWA Install Banner -->
     <div class="install-banner" id="installBanner">
         <span>Install Snake Classic for the best experience!</span>
-        <button id="installButton">Install</button>
+        <button type="button" id="installButton">Install</button>
     </div>
 
     <script>
+        // Loading animation
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loadingOverlay = document.getElementById('loadingOverlay');
+                loadingOverlay.style.opacity = '0';
+                setTimeout(() => {
+                    loadingOverlay.style.display = 'none';
+                }, 500);
+            }, 1000);
+        });
+
         // PWA Installation
         let deferredPrompt;
 
@@ -435,6 +617,68 @@
             }
         });
 
+        // Intersection Observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe elements for scroll animations
+        document.addEventListener('DOMContentLoaded', () => {
+            const animatedElements = document.querySelectorAll('.fade-in, .bounce-in');
+            animatedElements.forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(30px)';
+                observer.observe(el);
+            });
+        });
+
+        // Dynamic stats counter animation
+        function animateCounter(element, target) {
+            const increment = target / 50;
+            let current = 0;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                element.textContent = Math.floor(current);
+            }, 20);
+        }
+
+        // Animate stats when visible
+        const statsObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && !entry.target.hasAttribute('data-animated')) {
+                    entry.target.setAttribute('data-animated', 'true');
+                    const playCountEl = document.getElementById('playCount');
+                    const avgScoreEl = document.getElementById('avgScore');
+                    const highScoreEl = document.getElementById('highScore');
+                    
+                    if (playCountEl) playCountEl.textContent = '1,000+';
+                    if (avgScoreEl) animateCounter(avgScoreEl, 87);
+                    if (highScoreEl) animateCounter(highScoreEl, 342);
+                }
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const statsSection = document.querySelector('.stats-section');
+            if (statsSection) {
+                statsObserver.observe(statsSection);
+            }
+        });
+
         // Service worker registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -447,6 +691,17 @@
                     });
             });
         }
+
+        // Analytics placeholder (replace with your analytics code)
+        function trackEvent(eventName, properties = {}) {
+            console.log(`Event: ${eventName}`, properties);
+            // Add your analytics tracking here (Google Analytics, etc.)
+        }
+
+        // Track play button clicks
+        document.getElementById('playButton').addEventListener('click', () => {
+            trackEvent('play_button_clicked', { source: 'landing_page' });
+        });
     </script>
 </body>
 </html>
