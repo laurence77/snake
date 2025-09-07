@@ -263,7 +263,7 @@ class UltimateSnakeScene extends Phaser.Scene {
     });
     // Lives behavior badge beneath lives
     const persistLivesHUD = this.gameState?.settings?.persistLives === true;
-    this.livesBadge = this.add.text(10, 62, `(${persistLivesHUD ? 'Persist' : 'Reset'})`, {
+    this.livesBadge = this.add.text(10, 62, `(${persistLivesHUD ? '🔁 Persist' : '♻️ Reset'})`, {
       fontSize: '12px',
       fontFamily: 'Arial, sans-serif',
       color: persistLivesHUD ? '#f59e0b' : '#10b981',
@@ -414,7 +414,7 @@ class UltimateSnakeScene extends Phaser.Scene {
     
     // Lives behavior indicator
     const persistLives = this.gameState?.settings?.persistLives === true;
-    const livesBehavior = persistLives ? 'Persisting Across Levels' : 'Reset Each Level';
+    const livesBehavior = persistLives ? '🔁 Persist' : '♻️ Reset';
     const livesText = this.add.text(
       WIDTH / 2,
       HEIGHT / 2 + 40,
@@ -1204,7 +1204,7 @@ class UltimateSnakeScene extends Phaser.Scene {
     this.pauseLivesText = this.add.text(
       WIDTH / 2,
       HEIGHT / 2 + 70,
-      `Lives: ${persistLivesPause ? 'Persisting Across Levels' : 'Reset Each Level'}`,
+      `Lives: ${persistLivesPause ? '🔁 Persist' : '♻️ Reset'}`,
       {
         fontSize: '16px',
         fontFamily: 'Arial, sans-serif',
@@ -1228,7 +1228,7 @@ class UltimateSnakeScene extends Phaser.Scene {
     this.coinsText.setText(`Coins: ${this.coins}`);
     // Update lives badge text in HUD
     const persistLivesHUD = this.gameState?.settings?.persistLives === true;
-    this.livesBadge.setText(`(${persistLivesHUD ? 'Persist' : 'Reset'})`);
+    this.livesBadge.setText(`(${persistLivesHUD ? '🔁 Persist' : '♻️ Reset'})`);
     this.livesBadge.setColor(persistLivesHUD ? '#f59e0b' : '#10b981');
     // Combo display
     if (this.comboCount > 1) {
