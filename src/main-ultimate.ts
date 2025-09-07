@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { WIDTH, HEIGHT } from "./helpers";
 import { MenuScene } from "./scenes/MenuScene";
 import { StoreScene } from "./scenes/StoreScene";
+import { SettingsScene } from "./scenes/SettingsScene";
 import { LevelSystem } from "./systems/LevelSystem";
 import { FoodSystem } from "./systems/FoodSystem";
 import { SoundManager } from "./systems/SoundManager";
@@ -1357,7 +1358,7 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
   height: HEIGHT,
   parent: "game",
   backgroundColor: "#0b0d10",
-  scene: [MenuScene, UltimateSnakeScene, StoreScene],
+  scene: [MenuScene, UltimateSnakeScene, StoreScene, SettingsScene],
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH
