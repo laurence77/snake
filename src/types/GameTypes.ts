@@ -114,6 +114,7 @@ export interface GameSettings {
   vibrationEnabled: boolean;
   controlScheme: 'swipe' | 'buttons' | 'keyboard';
   difficulty: 'easy' | 'normal' | 'hard';
+  persistLives?: boolean; // If true, keep lives across levels
 }
 
 export interface GameStatistics {

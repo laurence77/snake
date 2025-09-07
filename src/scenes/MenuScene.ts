@@ -536,7 +536,8 @@ export class MenuScene extends Phaser.Scene {
         musicEnabled: true,
         vibrationEnabled: true,
         controlScheme: 'swipe',
-        difficulty: 'normal'
+        difficulty: 'normal',
+        persistLives: false
       },
       statistics: {
         totalScore: 0,

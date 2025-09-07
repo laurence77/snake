@@ -60,6 +60,12 @@ export class SettingsScene extends Phaser.Scene {
           const idx = order.indexOf(this.gameState.settings.difficulty);
           this.gameState.settings.difficulty = order[(idx + 1) % order.length];
         }
+      },
+      {
+        label: () => `Lives: ${this.gameState.settings.persistLives ? 'Persist Across Levels' : 'Reset Each Level'}`,
+        onClick: () => {
+          this.gameState.settings.persistLives = !this.gameState.settings.persistLives;
+        }
       }
     ];
 
@@ -93,4 +99,3 @@ export class SettingsScene extends Phaser.Scene {
     });
   }
 }
-

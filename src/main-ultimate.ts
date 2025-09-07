@@ -100,9 +100,16 @@ class UltimateSnakeScene extends Phaser.Scene {
     this.obstacles = [...level.obstacles];
     this.step = this.baseStep;
     this.score = 0;
-    // Ensure each level starts with full lives
-    this.lives = 3;
-    if (this.gameState) this.gameState.lives = 3;
+    // Lives behavior: reset or persist across levels based on settings
+    const persistLives = this.gameState?.settings?.persistLives === true;
+    if (!persistLives) {
+      this.lives = 3;
+      if (this.gameState) this.gameState.lives = 3;
+    } else {
+      // Keep current lives; ensure valid fallback
+      if (this.lives <= 0) this.lives = 3;
+      if (this.gameState && this.gameState.lives <= 0) this.gameState.lives = this.lives;
+    }
     this.gameOver = false;
     this.levelCompleted = false;
     this.paused = false;
@@ -1341,7 +1348,8 @@ class UltimateSnakeScene extends Phaser.Scene {
         musicEnabled: true,
         vibrationEnabled: true,
         controlScheme: 'swipe',
-        difficulty: 'normal'
+        difficulty: 'normal',
+        persistLives: false
       },
       statistics: {
         totalScore: 0,
