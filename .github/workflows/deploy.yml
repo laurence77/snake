@@ -32,8 +32,8 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Build project
-      run: npm run build
+    - name: Build ultimate bundle
+      run: npm run build:ultimate
 
     - name: Setup Pages
       uses: actions/configure-pages@v4
