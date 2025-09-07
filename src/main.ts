@@ -14,7 +14,7 @@ class SnakeScene extends Phaser.Scene {
 
   create(){
     this.cameras.main.setBackgroundColor("#0b0d10");
-    this.input.keyboard.on("keydown", (e: KeyboardEvent)=>{
+    this.input.keyboard?.on("keydown", (e: KeyboardEvent)=>{
       if (e.key === "ArrowUp" && this.dir.y === 0) this.dir = {x:0,y:-1};
       if (e.key === "ArrowDown" && this.dir.y === 0) this.dir = {x:0,y:1};
       if (e.key === "ArrowLeft" && this.dir.x === 0) this.dir = {x:-1,y:0};

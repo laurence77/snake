@@ -7,7 +7,7 @@ import { LevelSystem } from "./systems/LevelSystem";
 import { FoodSystem } from "./systems/FoodSystem";
 import { SoundManager } from "./systems/SoundManager";
 import { AnimationManager } from "./systems/AnimationManager";
-import { GameState, Level, FoodType, Position, SnakeSegment, Obstacle, FoodEffect } from "./types/GameTypes";
+import { GameState, Level, FoodType, Position, SnakeSegment, Obstacle, FoodEffect, LevelRule } from "./types/GameTypes";
 
 const TILE = 20;
 const COLS = Math.floor(WIDTH / TILE);
@@ -263,10 +263,10 @@ class UltimateSnakeScene extends Phaser.Scene {
     });
     // Lives behavior badge beneath lives
     const persistLivesHUD = this.gameState?.settings?.persistLives === true;
-    this.livesBadge = this.add.text(10, 62, `(${persistLivesHUD ? '🔁 Persist' : '♻️ Reset'})`, {
+    this.livesBadge = this.add.text(10, 62, `(${persistLivesHUD ? '🔄 Persist' : '✅ Reset'})`, {
       fontSize: '12px',
       fontFamily: 'Arial, sans-serif',
-      color: persistLivesHUD ? '#f59e0b' : '#10b981',
+      color: persistLivesHUD ? '#3b82f6' : '#22c55e',
       backgroundColor: '#000000',
       padding: { x: 6, y: 2 }
     });
@@ -316,7 +316,7 @@ class UltimateSnakeScene extends Phaser.Scene {
   
   private setupInput(): void {
     // Keyboard input
-    this.input.keyboard.on('keydown', (event: KeyboardEvent) => {
+    this.input.keyboard?.on('keydown', (event: KeyboardEvent) => {
       this.handleKeyInput(event.key);
     });
     
@@ -325,7 +325,7 @@ class UltimateSnakeScene extends Phaser.Scene {
     this.input.on('pointerup', this.handleTouchEnd, this);
     
     // Pause functionality
-    this.input.keyboard.on('keydown-ESC', () => {
+    this.input.keyboard?.on('keydown-ESC', () => {
       this.togglePause();
     });
   }
@@ -414,7 +414,7 @@ class UltimateSnakeScene extends Phaser.Scene {
     
     // Lives behavior indicator
     const persistLives = this.gameState?.settings?.persistLives === true;
-    const livesBehavior = persistLives ? '🔁 Persist' : '♻️ Reset';
+    const livesBehavior = persistLives ? '🔄 Persist' : '✅ Reset';
     const livesText = this.add.text(
       WIDTH / 2,
       HEIGHT / 2 + 40,
@@ -616,7 +616,7 @@ class UltimateSnakeScene extends Phaser.Scene {
     };
     
     // Handle special rules
-    if (this.currentLevel.specialRules?.includes('no_walls')) {
+    if (this.currentLevel.specialRules?.includes(LevelRule.NO_WALLS)) {
       // Wrap around edges
       if (newHead.x < 0) newHead.x = COLS - 1;
       if (newHead.x >= COLS) newHead.x = 0;
@@ -661,7 +661,7 @@ class UltimateSnakeScene extends Phaser.Scene {
   
   private shouldGrow(): boolean {
     // Check if snake should grow due to special rules
-    return this.currentLevel.specialRules?.includes('growing_tail') || false;
+    return this.currentLevel.specialRules?.includes(LevelRule.GROWING_TAIL) || false;
   }
   
   private checkObstacleCollision(position: Position): boolean {
@@ -1062,8 +1062,8 @@ class UltimateSnakeScene extends Phaser.Scene {
     ).setOrigin(0.5);
     
     // Handle continue input
-    const continueKey = this.input.keyboard.addKey('SPACE');
-    continueKey.on('down', () => {
+    const continueKey = this.input.keyboard?.addKey('SPACE');
+    continueKey?.on('down', () => {
       this.proceedToNextLevel();
     });
   }
@@ -1110,14 +1110,14 @@ class UltimateSnakeScene extends Phaser.Scene {
     ).setOrigin(0.5);
     
     // Handle retry/menu input
-    const retryKey = this.input.keyboard.addKey('R');
-    const escKey = this.input.keyboard.addKey('ESC');
+    const retryKey = this.input.keyboard?.addKey('R');
+    const escKey = this.input.keyboard?.addKey('ESC');
     
-    retryKey.on('down', () => {
+    retryKey?.on('down', () => {
       this.scene.restart({ levelNumber: this.levelNumber, gameState: this.gameState });
     });
     
-    escKey.on('down', () => {
+    escKey?.on('down', () => {
       this.scene.start('MenuScene', { gameState: this.gameState });
     });
   }
@@ -1204,11 +1204,11 @@ class UltimateSnakeScene extends Phaser.Scene {
     this.pauseLivesText = this.add.text(
       WIDTH / 2,
       HEIGHT / 2 + 70,
-      `Lives: ${persistLivesPause ? '🔁 Persist' : '♻️ Reset'}`,
+      `Lives: ${persistLivesPause ? '🔄 Persist' : '✅ Reset'}`,
       {
         fontSize: '16px',
         fontFamily: 'Arial, sans-serif',
-        color: persistLivesPause ? '#f59e0b' : '#10b981',
+        color: persistLivesPause ? '#3b82f6' : '#22c55e',
         stroke: '#000000',
         strokeThickness: 2,
         align: 'center'
@@ -1228,8 +1228,8 @@ class UltimateSnakeScene extends Phaser.Scene {
     this.coinsText.setText(`Coins: ${this.coins}`);
     // Update lives badge text in HUD
     const persistLivesHUD = this.gameState?.settings?.persistLives === true;
-    this.livesBadge.setText(`(${persistLivesHUD ? '🔁 Persist' : '♻️ Reset'})`);
-    this.livesBadge.setColor(persistLivesHUD ? '#f59e0b' : '#10b981');
+    this.livesBadge.setText(`(${persistLivesHUD ? '🔄 Persist' : '✅ Reset'})`);
+    this.livesBadge.setColor(persistLivesHUD ? '#3b82f6' : '#22c55e');
     // Combo display
     if (this.comboCount > 1) {
       this.comboText.setText(`Combo x${this.comboCount}`);
@@ -1447,7 +1447,7 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
   physics: {
     default: 'arcade',
     arcade: {
-      gravity: { y: 0 },
+      gravity: { x: 0, y: 0 },
       debug: false
     }
   }

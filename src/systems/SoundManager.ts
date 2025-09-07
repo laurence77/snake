@@ -324,7 +324,7 @@ export class SoundManager {
     if (!sound || !this.sfxEnabled) return;
     
     if (volume !== undefined) {
-      sound.setVolume(volume * this.sfxVolume);
+      (sound as any).setVolume(volume * this.sfxVolume);
     }
     
     sound.play();
@@ -421,7 +421,7 @@ export class SoundManager {
     
     const music = this.sounds.get('background_music');
     if (music) {
-      music.setVolume(this.musicVolume);
+      (music as any).setVolume(this.musicVolume);
     }
   }
   

@@ -115,7 +115,7 @@ export class SnakeParticlePool extends ObjectPool<SnakeParticle> {
   }
   
   update(dt: number): void {
-    for (const particle of this.active) {
+    for (const particle of (this as any).active) {
       particle.life -= dt * 1000;
       
       if (particle.life <= 0) {

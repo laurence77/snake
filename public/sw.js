@@ -1,12 +1,13 @@
 const CACHE_NAME = 'snake-classic-v1';
 const urlsToCache = [
-  '/landing.html',
-  '/index.html',
-  '/bundle.js',
-  '/assets/icons/apple.png',
-  '/assets/icons/snake-head.png',
-  '/assets/icons/controller.png',
-  '/assets/icons/coin.webp'
+  './landing.html',
+  './index.html',
+  './bundle.js',
+  './assets/icons/apple.png',
+  './assets/icons/snake-head.png',
+  './assets/icons/controller.png',
+  './assets/icons/coin.webp',
+  '../manifest.webmanifest'
 ];
 
 // Install event - cache resources
@@ -50,7 +51,7 @@ self.addEventListener('fetch', (event) => {
           .catch(() => {
             // Return offline fallback if available
             if (event.request.destination === 'document') {
-              return caches.match('/landing.html');
+              return caches.match('./landing.html');
             }
           });
       }

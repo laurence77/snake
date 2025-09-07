@@ -80,7 +80,7 @@ class EnhancedSnakeScene extends Phaser.Scene {
   
   private setupInput(): void {
     // Enhanced input handling with reaction time tracking
-    this.input.keyboard.on("keydown", (e: KeyboardEvent) => {
+    this.input.keyboard?.on("keydown", (e: KeyboardEvent) => {
       if (this.gameOver || this.isPaused) return;
       
       const now = performance.now();
@@ -143,12 +143,12 @@ class EnhancedSnakeScene extends Phaser.Scene {
     }).setOrigin(0.5);
     
     // Debug key for performance display
-    this.input.keyboard.on("keydown-P", () => {
+    this.input.keyboard?.on("keydown-P", () => {
       this.performanceText.visible = !this.performanceText.visible;
     });
     
     // Restart key
-    this.input.keyboard.on("keydown-R", () => {
+    this.input.keyboard?.on("keydown-R", () => {
       if (this.gameOver) {
         this.restartGame();
       }
@@ -175,7 +175,6 @@ class EnhancedSnakeScene extends Phaser.Scene {
     this.acc = 0;
     
     this.moveSnake();
-    this.checkCollisions();
     this.updatePowerUps(dt);
     this.spawnPowerUps();
     this.renderGame();

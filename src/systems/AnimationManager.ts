@@ -289,7 +289,6 @@ export class AnimationManager {
           speedY: { min: 100, max: 300 },
           speedX: { min: -100, max: 100 },
           scale: { start: 0.8, end: 0.2 },
-          rotation: { start: 0, end: 360 },
           lifespan: 3000,
           frequency: 50
         }

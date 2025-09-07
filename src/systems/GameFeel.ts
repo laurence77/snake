@@ -17,9 +17,9 @@ export class GameFeelManager {
    * Screen shake with customizable intensity and duration
    */
   screenShake(intensity: number = 8, duration: number = 150, frequency: number = 0.1): void {
-    if (this.camera.isShaking) return;
+    if ((this.camera as any).isShaking) return;
     
-    this.camera.shake(duration, intensity * 0.01, false, (camera, progress) => {
+    this.camera.shake(duration, intensity * 0.01, false, (camera: any, progress: number) => {
       // Custom shake pattern for more organic feel
       const shake = Math.sin(progress * Math.PI * frequency) * intensity * (1 - progress);
       return shake;
