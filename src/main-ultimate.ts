@@ -59,6 +59,7 @@ class UltimateSnakeScene extends Phaser.Scene {
   private coinsText!: Phaser.GameObjects.Text;
   private effectsContainer!: Phaser.GameObjects.Container;
   private comboText!: Phaser.GameObjects.Text;
+  private livesBadge!: Phaser.GameObjects.Text;
   
   // Combo/bonus system
   private comboCount: number = 0;
@@ -259,6 +260,15 @@ class UltimateSnakeScene extends Phaser.Scene {
       color: '#ff4444',
       backgroundColor: '#000000',
       padding: { x: 8, y: 4 }
+    });
+    // Lives behavior badge beneath lives
+    const persistLivesHUD = this.gameState?.settings?.persistLives === true;
+    this.livesBadge = this.add.text(10, 62, `(${persistLivesHUD ? 'Persist' : 'Reset'})`, {
+      fontSize: '12px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#fbbf24',
+      backgroundColor: '#000000',
+      padding: { x: 6, y: 2 }
     });
     
     // Level display
@@ -1170,6 +1180,7 @@ class UltimateSnakeScene extends Phaser.Scene {
   
   private pauseOverlay?: Phaser.GameObjects.Graphics;
   private pauseText?: Phaser.GameObjects.Text;
+  private pauseLivesText?: Phaser.GameObjects.Text;
   
   private showPauseScreen(): void {
     this.pauseOverlay = this.add.graphics();
@@ -1188,17 +1199,36 @@ class UltimateSnakeScene extends Phaser.Scene {
         fontStyle: 'bold'
       }
     ).setOrigin(0.5);
+    // Lives behavior in pause overlay
+    const persistLivesPause = this.gameState?.settings?.persistLives === true;
+    this.pauseLivesText = this.add.text(
+      WIDTH / 2,
+      HEIGHT / 2 + 70,
+      `Lives: ${persistLivesPause ? 'Persisting Across Levels' : 'Reset Each Level'}`,
+      {
+        fontSize: '16px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#fbbf24',
+        stroke: '#000000',
+        strokeThickness: 2,
+        align: 'center'
+      }
+    ).setOrigin(0.5);
   }
   
   private hidePauseScreen(): void {
     this.pauseOverlay?.destroy();
     this.pauseText?.destroy();
+    this.pauseLivesText?.destroy();
   }
   
   private updateUI(): void {
     this.scoreText.setText(`Score: ${this.score}`);
     this.livesText.setText(`Lives: ${this.lives}`);
     this.coinsText.setText(`Coins: ${this.coins}`);
+    // Update lives badge text in HUD
+    const persistLivesHUD = this.gameState?.settings?.persistLives === true;
+    this.livesBadge.setText(`(${persistLivesHUD ? 'Persist' : 'Reset'})`);
     // Combo display
     if (this.comboCount > 1) {
       this.comboText.setText(`Combo x${this.comboCount}`);
