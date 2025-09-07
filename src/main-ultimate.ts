@@ -402,12 +402,36 @@ class UltimateSnakeScene extends Phaser.Scene {
       }
     ).setOrigin(0.5);
     
+    // Lives behavior indicator
+    const persistLives = this.gameState?.settings?.persistLives === true;
+    const livesBehavior = persistLives ? 'Persisting Across Levels' : 'Reset Each Level';
+    const livesText = this.add.text(
+      WIDTH / 2,
+      HEIGHT / 2 + 40,
+      `Lives: ${livesBehavior}`,
+      {
+        fontSize: '18px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#fbbf24',
+        stroke: '#000000',
+        strokeThickness: 2,
+        align: 'center'
+      }
+    ).setOrigin(0.5);
+    
     this.tweens.add({
       targets: introText,
       alpha: 0,
       duration: 3000,
       ease: 'Quad.easeOut',
       onComplete: () => introText.destroy()
+    });
+    this.tweens.add({
+      targets: livesText,
+      alpha: 0,
+      duration: 3000,
+      ease: 'Quad.easeOut',
+      onComplete: () => livesText.destroy()
     });
     
     // Show special rules if any
