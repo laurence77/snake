@@ -23,4 +23,672 @@ export class StoreScene extends Phaser.Scene {
   private itemsPerRow = 3;
   private itemsPerPage = 9;
   private currentPage = 0;
-  private currentItems: StoreItem[] = [];\n  \n  constructor() {\n    super({ key: 'StoreScene' });\n  }\n  \n  init(data: { gameState: GameState; returnScene: string }) {\n    this.storeSystem = new StoreSystem();\n    this.gameState = data.gameState;\n    this.returnScene = data.returnScene || 'MenuScene';\n  }\n  \n  create() {\n    this.createBackground();\n    this.createHeader();\n    this.createCategoryTabs();\n    this.createItemsGrid();\n    this.createBackButton();\n    this.updateItemsDisplay();\n  }\n  \n  private createBackground(): void {\n    this.background = this.add.graphics();\n    \n    // Store-themed gradient background\n    this.background.fillGradientStyle(0x1a202c, 0x2d3748, 0x2d3748, 0x4a5568, 1);\n    this.background.fillRect(0, 0, this.scale.width, this.scale.height);\n    \n    // Add decorative elements\n    this.createStoreDecorations();\n  }\n  \n  private createStoreDecorations(): void {\n    // Add some coin particles floating in background\n    for (let i = 0; i < 15; i++) {\n      const coin = this.add.circle(\n        Math.random() * this.scale.width,\n        Math.random() * this.scale.height,\n        Math.random() * 8 + 3,\n        0xffd700,\n        0.1\n      );\n      \n      this.tweens.add({\n        targets: coin,\n        y: coin.y - 50,\n        rotation: Math.PI * 2,\n        alpha: 0.05 + Math.random() * 0.1,\n        duration: 4000 + Math.random() * 2000,\n        yoyo: true,\n        repeat: -1,\n        ease: 'Sine.easeInOut'\n      });\n    }\n  }\n  \n  private createHeader(): void {\n    this.headerContainer = this.add.container(0, 0);\n    \n    // Title\n    const title = this.add.text(\n      this.scale.width / 2,\n      40,\n      '🏪 Snake Store',\n      {\n        fontSize: '36px',\n        fontFamily: 'Arial, sans-serif',\n        color: '#ffffff',\n        stroke: '#ffd700',\n        strokeThickness: 2\n      }\n    ).setOrigin(0.5);\n    \n    // Coin display\n    this.coinDisplay = this.add.container(this.scale.width - 120, 30);\n    \n    const coinBg = this.add.graphics();\n    coinBg.fillStyle(0x047857, 0.9);\n    coinBg.fillRoundedRect(-60, -15, 120, 30, 15);\n    coinBg.lineStyle(2, 0xffd700);\n    coinBg.strokeRoundedRect(-60, -15, 120, 30, 15);\n    \n    const coinIcon = this.add.circle(-35, 0, 10, 0xffd700);\n    coinIcon.setStrokeStyle(2, 0xffa500);\n    \n    const coinText = this.add.text(10, 0, this.gameState.coins.toString(), {\n      fontSize: '18px',\n      fontFamily: 'Arial, sans-serif',\n      color: '#ffffff',\n      fontStyle: 'bold'\n    }).setOrigin(0.5);\n    \n    this.coinDisplay.add([coinBg, coinIcon, coinText]);\n    this.headerContainer.add([title, this.coinDisplay]);\n  }\n  \n  private createCategoryTabs(): void {\n    this.categoryContainer = this.add.container(0, 80);\n    \n    const categories = [\n      { key: 'all', name: 'All Items', icon: '📦' },\n      { key: 'daily', name: 'Daily Deals', icon: '⏰' },\n      { key: 'featured', name: 'Featured', icon: '⭐' },\n      { key: StoreItemType.SKIN, name: 'Skins', icon: '🐍' },\n      { key: StoreItemType.THEME, name: 'Themes', icon: '🎨' },\n      { key: StoreItemType.POWERUP, name: 'Power-ups', icon: '⚡' },\n      { key: StoreItemType.BOOSTER, name: 'Boosters', icon: '🚀' }\n    ];\n    \n    const tabWidth = 100;\n    const startX = (this.scale.width - (categories.length * tabWidth)) / 2;\n    \n    categories.forEach((category, index) => {\n      const x = startX + index * tabWidth;\n      const y = 0;\n      \n      this.createCategoryTab(x, y, category.key as any, category.name, category.icon);\n    });\n  }\n  \n  private createCategoryTab(\n    x: number,\n    y: number,\n    categoryKey: StoreItemType | 'all' | 'daily' | 'featured',\n    name: string,\n    icon: string\n  ): void {\n    const tab = this.add.container(x, y);\n    \n    const isActive = this.currentCategory === categoryKey;\n    \n    // Tab background\n    const bg = this.add.graphics();\n    const bgColor = isActive ? 0x10b981 : 0x4a5568;\n    const borderColor = isActive ? 0xffd700 : 0x718096;\n    \n    bg.fillStyle(bgColor, 0.9);\n    bg.fillRoundedRect(-40, -20, 80, 40, 8);\n    bg.lineStyle(2, borderColor);\n    bg.strokeRoundedRect(-40, -20, 80, 40, 8);\n    \n    // Tab icon\n    const tabIcon = this.add.text(0, -8, icon, {\n      fontSize: '16px'\n    }).setOrigin(0.5);\n    \n    // Tab text\n    const tabText = this.add.text(0, 8, name, {\n      fontSize: '10px',\n      fontFamily: 'Arial, sans-serif',\n      color: '#ffffff',\n      fontStyle: 'bold'\n    }).setOrigin(0.5);\n    \n    tab.add([bg, tabIcon, tabText]);\n    this.categoryContainer.add(tab);\n    \n    // Add interactivity\n    tab.setInteractive(\n      new Phaser.Geom.Rectangle(-40, -20, 80, 40),\n      Phaser.Geom.Rectangle.Contains\n    );\n    \n    tab.on('pointerover', () => {\n      if (this.currentCategory !== categoryKey) {\n        bg.clear();\n        bg.fillStyle(0x68d391, 0.9);\n        bg.fillRoundedRect(-40, -20, 80, 40, 8);\n        bg.lineStyle(2, 0xffd700);\n        bg.strokeRoundedRect(-40, -20, 80, 40, 8);\n      }\n    });\n    \n    tab.on('pointerout', () => {\n      if (this.currentCategory !== categoryKey) {\n        bg.clear();\n        bg.fillStyle(0x4a5568, 0.9);\n        bg.fillRoundedRect(-40, -20, 80, 40, 8);\n        bg.lineStyle(2, 0x718096);\n        bg.strokeRoundedRect(-40, -20, 80, 40, 8);\n      }\n    });\n    \n    tab.on('pointerdown', () => {\n      this.switchCategory(categoryKey);\n    });\n  }\n  \n  private createItemsGrid(): void {\n    this.itemsContainer = this.add.container(0, 150);\n  }\n  \n  private createBackButton(): void {\n    this.backButton = this.add.container(60, this.scale.height - 40);\n    \n    const bg = this.add.graphics();\n    bg.fillStyle(0xdc2626, 0.8);\n    bg.fillRoundedRect(-40, -20, 80, 40, 10);\n    bg.lineStyle(2, 0xf87171);\n    bg.strokeRoundedRect(-40, -20, 80, 40, 10);\n    \n    const backText = this.add.text(0, 0, '← Back', {\n      fontSize: '16px',\n      fontFamily: 'Arial, sans-serif',\n      color: '#ffffff',\n      fontStyle: 'bold'\n    }).setOrigin(0.5);\n    \n    this.backButton.add([bg, backText]);\n    \n    this.backButton.setInteractive(\n      new Phaser.Geom.Rectangle(-40, -20, 80, 40),\n      Phaser.Geom.Rectangle.Contains\n    );\n    \n    this.backButton.on('pointerover', () => {\n      this.tweens.add({\n        targets: this.backButton,\n        scaleX: 1.05,\n        scaleY: 1.05,\n        duration: 100\n      });\n    });\n    \n    this.backButton.on('pointerout', () => {\n      this.tweens.add({\n        targets: this.backButton,\n        scaleX: 1,\n        scaleY: 1,\n        duration: 100\n      });\n    });\n    \n    this.backButton.on('pointerdown', () => {\n      this.scene.start(this.returnScene, { gameState: this.gameState });\n    });\n  }\n  \n  private switchCategory(category: StoreItemType | 'all' | 'daily' | 'featured'): void {\n    this.currentCategory = category;\n    this.currentPage = 0;\n    \n    // Recreate category tabs with new active state\n    this.categoryContainer.destroy();\n    this.createCategoryTabs();\n    \n    // Update items display\n    this.updateItemsDisplay();\n  }\n  \n  private updateItemsDisplay(): void {\n    // Get items for current category\n    this.currentItems = this.getItemsForCategory();\n    \n    // Clear existing items\n    this.itemsContainer.removeAll(true);\n    \n    // Create item cards\n    const startIndex = this.currentPage * this.itemsPerPage;\n    const endIndex = Math.min(startIndex + this.itemsPerPage, this.currentItems.length);\n    const itemsToShow = this.currentItems.slice(startIndex, endIndex);\n    \n    const cardWidth = 140;\n    const cardHeight = 180;\n    const padding = 20;\n    const startX = (this.scale.width - (this.itemsPerRow * (cardWidth + padding))) / 2 + cardWidth / 2;\n    const startY = 40;\n    \n    itemsToShow.forEach((item, index) => {\n      const row = Math.floor(index / this.itemsPerRow);\n      const col = index % this.itemsPerRow;\n      const x = startX + col * (cardWidth + padding);\n      const y = startY + row * (cardHeight + padding);\n      \n      this.createItemCard(item, x, y, cardWidth, cardHeight);\n    });\n    \n    // Create pagination if needed\n    this.createPagination();\n  }\n  \n  private getItemsForCategory(): StoreItem[] {\n    switch (this.currentCategory) {\n      case 'all':\n        return this.storeSystem.getAvailableItems(this.gameState);\n        \n      case 'daily':\n        return this.storeSystem.getDailyOffers();\n        \n      case 'featured':\n        return this.storeSystem.getFeaturedItems(this.gameState);\n        \n      default:\n        return this.storeSystem.getItemsByType(this.currentCategory as StoreItemType)\n          .filter(item => this.storeSystem.isItemUnlocked(item, this.gameState));\n    }\n  }\n  \n  private createItemCard(\n    item: StoreItem,\n    x: number,\n    y: number,\n    width: number,\n    height: number\n  ): void {\n    const card = this.add.container(x, y);\n    \n    const isOwned = this.storeSystem.isItemOwned(item, this.gameState);\n    const canAfford = this.storeSystem.canAffordItem(item, this.gameState);\n    \n    // Card background\n    const bg = this.add.graphics();\n    const bgColor = isOwned ? 0x065f46 : (canAfford ? 0x1f2937 : 0x374151);\n    const borderColor = this.getRarityColor(item.rarity);\n    \n    bg.fillStyle(bgColor, 0.9);\n    bg.fillRoundedRect(-width/2, -height/2, width, height, 12);\n    bg.lineStyle(3, borderColor);\n    bg.strokeRoundedRect(-width/2, -height/2, width, height, 12);\n    \n    // Item icon/preview\n    const itemIcon = this.getItemIcon(item);\n    const icon = this.add.text(0, -50, itemIcon, {\n      fontSize: '32px'\n    }).setOrigin(0.5);\n    \n    // Item name\n    const name = this.add.text(0, -10, item.name, {\n      fontSize: '12px',\n      fontFamily: 'Arial, sans-serif',\n      color: '#ffffff',\n      fontStyle: 'bold',\n      wordWrap: { width: width - 20 }\n    }).setOrigin(0.5);\n    \n    // Item description\n    const description = this.add.text(0, 15, item.description, {\n      fontSize: '9px',\n      fontFamily: 'Arial, sans-serif',\n      color: '#cccccc',\n      wordWrap: { width: width - 20 },\n      align: 'center'\n    }).setOrigin(0.5);\n    \n    // Price and purchase button\n    let purchaseButton;\n    \n    if (isOwned && !item.isConsumable) {\n      // Owned indicator\n      purchaseButton = this.add.text(0, 65, 'OWNED', {\n        fontSize: '12px',\n        fontFamily: 'Arial, sans-serif',\n        color: '#10b981',\n        fontStyle: 'bold'\n      }).setOrigin(0.5);\n    } else {\n      // Purchase button\n      const buttonBg = this.add.graphics();\n      const buttonColor = canAfford ? 0x10b981 : 0x6b7280;\n      \n      buttonBg.fillStyle(buttonColor, 0.9);\n      buttonBg.fillRoundedRect(-50, 50, 100, 25, 8);\n      \n      const currencyIcon = item.currency === 'coins' ? '🪙' : '💎';\n      const buttonText = this.add.text(\n        0,\n        62,\n        `${currencyIcon} ${item.price}`,\n        {\n          fontSize: '11px',\n          fontFamily: 'Arial, sans-serif',\n          color: '#ffffff',\n          fontStyle: 'bold'\n        }\n      ).setOrigin(0.5);\n      \n      purchaseButton = this.add.container(0, 0, [buttonBg, buttonText]);\n      \n      if (canAfford) {\n        purchaseButton.setInteractive(\n          new Phaser.Geom.Rectangle(-50, 50, 100, 25),\n          Phaser.Geom.Rectangle.Contains\n        );\n        \n        purchaseButton.on('pointerover', () => {\n          buttonBg.clear();\n          buttonBg.fillStyle(0x059669, 1);\n          buttonBg.fillRoundedRect(-50, 50, 100, 25, 8);\n        });\n        \n        purchaseButton.on('pointerout', () => {\n          buttonBg.clear();\n          buttonBg.fillStyle(0x10b981, 0.9);\n          buttonBg.fillRoundedRect(-50, 50, 100, 25, 8);\n        });\n        \n        purchaseButton.on('pointerdown', () => {\n          this.purchaseItem(item);\n        });\n      }\n    }\n    \n    // Rarity indicator\n    const rarityBadge = this.add.text(-width/2 + 8, -height/2 + 8, this.getRarityLabel(item.rarity), {\n      fontSize: '8px',\n      fontFamily: 'Arial, sans-serif',\n      color: '#ffffff',\n      backgroundColor: this.getRarityColorHex(item.rarity),\n      padding: { x: 4, y: 2 }\n    });\n    \n    card.add([bg, icon, name, description, purchaseButton, rarityBadge]);\n    this.itemsContainer.add(card);\n    \n    // Add hover effect for the entire card\n    card.setInteractive(\n      new Phaser.Geom.Rectangle(-width/2, -height/2, width, height),\n      Phaser.Geom.Rectangle.Contains\n    );\n    \n    card.on('pointerover', () => {\n      this.tweens.add({\n        targets: card,\n        scaleX: 1.05,\n        scaleY: 1.05,\n        duration: 200,\n        ease: 'Back.easeOut'\n      });\n    });\n    \n    card.on('pointerout', () => {\n      this.tweens.add({\n        targets: card,\n        scaleX: 1,\n        scaleY: 1,\n        duration: 200,\n        ease: 'Back.easeOut'\n      });\n    });\n  }\n  \n  private createPagination(): void {\n    const totalPages = Math.ceil(this.currentItems.length / this.itemsPerPage);\n    if (totalPages <= 1) return;\n    \n    const paginationY = this.scale.height - 80;\n    \n    // Previous button\n    if (this.currentPage > 0) {\n      const prevButton = this.createPaginationButton(\n        this.scale.width / 2 - 60,\n        paginationY,\n        '◀',\n        () => {\n          this.currentPage--;\n          this.updateItemsDisplay();\n        }\n      );\n    }\n    \n    // Page indicator\n    this.add.text(\n      this.scale.width / 2,\n      paginationY,\n      `${this.currentPage + 1} / ${totalPages}`,\n      {\n        fontSize: '14px',\n        fontFamily: 'Arial, sans-serif',\n        color: '#ffffff'\n      }\n    ).setOrigin(0.5);\n    \n    // Next button\n    if (this.currentPage < totalPages - 1) {\n      const nextButton = this.createPaginationButton(\n        this.scale.width / 2 + 60,\n        paginationY,\n        '▶',\n        () => {\n          this.currentPage++;\n          this.updateItemsDisplay();\n        }\n      );\n    }\n  }\n  \n  private createPaginationButton(\n    x: number,\n    y: number,\n    text: string,\n    callback: () => void\n  ): Phaser.GameObjects.Container {\n    const button = this.add.container(x, y);\n    \n    const bg = this.add.graphics();\n    bg.fillStyle(0x4a5568, 0.8);\n    bg.fillCircle(0, 0, 20);\n    bg.lineStyle(2, 0x718096);\n    bg.strokeCircle(0, 0, 20);\n    \n    const buttonText = this.add.text(0, 0, text, {\n      fontSize: '16px',\n      fontFamily: 'Arial, sans-serif',\n      color: '#ffffff',\n      fontStyle: 'bold'\n    }).setOrigin(0.5);\n    \n    button.add([bg, buttonText]);\n    this.itemsContainer.add(button);\n    \n    button.setInteractive(\n      new Phaser.Geom.Circle(0, 0, 20),\n      Phaser.Geom.Circle.Contains\n    );\n    \n    button.on('pointerover', () => {\n      bg.clear();\n      bg.fillStyle(0x10b981, 1);\n      bg.fillCircle(0, 0, 20);\n      bg.lineStyle(2, 0xffd700);\n      bg.strokeCircle(0, 0, 20);\n    });\n    \n    button.on('pointerout', () => {\n      bg.clear();\n      bg.fillStyle(0x4a5568, 0.8);\n      bg.fillCircle(0, 0, 20);\n      bg.lineStyle(2, 0x718096);\n      bg.strokeCircle(0, 0, 20);\n    });\n    \n    button.on('pointerdown', callback);\n    \n    return button;\n  }\n  \n  private purchaseItem(item: StoreItem): void {\n    const result = this.storeSystem.purchaseItem(item.id, this.gameState);\n    \n    if (result.success && result.newGameState) {\n      this.gameState = result.newGameState;\n      \n      // Update coin display\n      const coinText = this.coinDisplay.getAt(2) as Phaser.GameObjects.Text;\n      coinText.setText(this.gameState.coins.toString());\n      \n      // Show purchase success effect\n      this.showPurchaseSuccess(item);\n      \n      // Refresh the display\n      this.updateItemsDisplay();\n    } else {\n      // Show error message\n      this.showPurchaseError(result.message);\n    }\n  }\n  \n  private showPurchaseSuccess(item: StoreItem): void {\n    const successText = this.add.text(\n      this.scale.width / 2,\n      this.scale.height / 2,\n      `${item.name} purchased!`,\n      {\n        fontSize: '24px',\n        fontFamily: 'Arial, sans-serif',\n        color: '#10b981',\n        fontStyle: 'bold',\n        stroke: '#000000',\n        strokeThickness: 2\n      }\n    ).setOrigin(0.5);\n    \n    this.tweens.add({\n      targets: successText,\n      y: successText.y - 50,\n      alpha: 0,\n      duration: 2000,\n      ease: 'Quad.easeOut',\n      onComplete: () => successText.destroy()\n    });\n  }\n  \n  private showPurchaseError(message: string): void {\n    const errorText = this.add.text(\n      this.scale.width / 2,\n      this.scale.height / 2,\n      message,\n      {\n        fontSize: '18px',\n        fontFamily: 'Arial, sans-serif',\n        color: '#ef4444',\n        fontStyle: 'bold',\n        stroke: '#000000',\n        strokeThickness: 2\n      }\n    ).setOrigin(0.5);\n    \n    this.tweens.add({\n      targets: errorText,\n      alpha: 0,\n      duration: 3000,\n      ease: 'Quad.easeOut',\n      onComplete: () => errorText.destroy()\n    });\n  }\n  \n  // Helper methods\n  private getItemIcon(item: StoreItem): string {\n    const icons: Record<string, string> = {\n      // Skins\n      classic_skin: '🐍',\n      rainbow_skin: '🌈',\n      metal_skin: '🤖',\n      fire_skin: '🔥',\n      galaxy_skin: '🌌',\n      shadow_skin: '👤',\n      \n      // Themes\n      neon_theme: '🌃',\n      retro_theme: '👾',\n      nature_theme: '🌲',\n      space_theme: '🚀',\n      \n      // Power-ups\n      speed_boost: '⚡',\n      shield_power: '🛡️',\n      coin_magnet: '🧲',\n      double_points: '✖️',\n      food_rain: '🌧️',\n      time_freeze: '❄️',\n      \n      // Boosters\n      coin_boost_10: '💰',\n      coin_boost_25: '💸',\n      xp_boost_15: '📈',\n      lucky_food: '🍀',\n      \n      // Lives\n      extra_life: '❤️',\n      life_pack_5: '💕'\n    };\n    \n    return icons[item.id] || '📦';\n  }\n  \n  private getRarityColor(rarity: string): number {\n    const colors: Record<string, number> = {\n      common: 0x6b7280,\n      rare: 0x3b82f6,\n      epic: 0x8b5cf6,\n      legendary: 0xf59e0b\n    };\n    return colors[rarity] || colors.common;\n  }\n  \n  private getRarityColorHex(rarity: string): string {\n    const colors: Record<string, string> = {\n      common: '#6b7280',\n      rare: '#3b82f6',\n      epic: '#8b5cf6',\n      legendary: '#f59e0b'\n    };\n    return colors[rarity] || colors.common;\n  }\n  \n  private getRarityLabel(rarity: string): string {\n    return rarity.toUpperCase();\n  }\n}
+  private currentItems: StoreItem[] = [];
+  
+  constructor() {
+    super({ key: 'StoreScene' });
+  }
+  
+  init(data: { gameState: GameState; returnScene: string }) {
+    this.storeSystem = new StoreSystem();
+    this.gameState = data.gameState;
+    this.returnScene = data.returnScene || 'MenuScene';
+  }
+  
+  create() {
+    this.createBackground();
+    this.createHeader();
+    this.createCategoryTabs();
+    this.createItemsGrid();
+    this.createBackButton();
+    this.updateItemsDisplay();
+  }
+  
+  private createBackground(): void {
+    this.background = this.add.graphics();
+    
+    // Store-themed gradient background
+    this.background.fillGradientStyle(0x1a202c, 0x2d3748, 0x2d3748, 0x4a5568, 1);
+    this.background.fillRect(0, 0, this.scale.width, this.scale.height);
+    
+    // Add decorative elements
+    this.createStoreDecorations();
+  }
+  
+  private createStoreDecorations(): void {
+    // Add some coin particles floating in background
+    for (let i = 0; i < 15; i++) {
+      const coin = this.add.circle(
+        Math.random() * this.scale.width,
+        Math.random() * this.scale.height,
+        Math.random() * 8 + 3,
+        0xffd700,
+        0.1
+      );
+      
+      this.tweens.add({
+        targets: coin,
+        y: coin.y - 50,
+        rotation: Math.PI * 2,
+        alpha: 0.05 + Math.random() * 0.1,
+        duration: 4000 + Math.random() * 2000,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
+      });
+    }
+  }
+  
+  private createHeader(): void {
+    this.headerContainer = this.add.container(0, 0);
+    
+    // Title
+    const title = this.add.text(
+      this.scale.width / 2,
+      40,
+      '🏪 Snake Store',
+      {
+        fontSize: '36px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#ffffff',
+        stroke: '#ffd700',
+        strokeThickness: 2
+      }
+    ).setOrigin(0.5);
+    
+    // Coin display
+    this.coinDisplay = this.add.container(this.scale.width - 120, 30);
+    
+    const coinBg = this.add.graphics();
+    coinBg.fillStyle(0x047857, 0.9);
+    coinBg.fillRoundedRect(-60, -15, 120, 30, 15);
+    coinBg.lineStyle(2, 0xffd700);
+    coinBg.strokeRoundedRect(-60, -15, 120, 30, 15);
+    
+    const coinIcon = this.add.circle(-35, 0, 10, 0xffd700);
+    coinIcon.setStrokeStyle(2, 0xffa500);
+    
+    const coinText = this.add.text(10, 0, this.gameState.coins.toString(), {
+      fontSize: '18px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    
+    this.coinDisplay.add([coinBg, coinIcon, coinText]);
+    this.headerContainer.add([title, this.coinDisplay]);
+  }
+  
+  private createCategoryTabs(): void {
+    this.categoryContainer = this.add.container(0, 80);
+    
+    const categories = [
+      { key: 'all', name: 'All Items', icon: '📦' },
+      { key: 'daily', name: 'Daily Deals', icon: '⏰' },
+      { key: 'featured', name: 'Featured', icon: '⭐' },
+      { key: StoreItemType.SKIN, name: 'Skins', icon: '🐍' },
+      { key: StoreItemType.THEME, name: 'Themes', icon: '🎨' },
+      { key: StoreItemType.POWERUP, name: 'Power-ups', icon: '⚡' },
+      { key: StoreItemType.BOOSTER, name: 'Boosters', icon: '🚀' }
+    ];
+    
+    const tabWidth = 100;
+    const startX = (this.scale.width - (categories.length * tabWidth)) / 2;
+    
+    categories.forEach((category, index) => {
+      const x = startX + index * tabWidth;
+      const y = 0;
+      
+      this.createCategoryTab(x, y, category.key as any, category.name, category.icon);
+    });
+  }
+  
+  private createCategoryTab(
+    x: number,
+    y: number,
+    categoryKey: StoreItemType | 'all' | 'daily' | 'featured',
+    name: string,
+    icon: string
+  ): void {
+    const tab = this.add.container(x, y);
+    
+    const isActive = this.currentCategory === categoryKey;
+    
+    // Tab background
+    const bg = this.add.graphics();
+    const bgColor = isActive ? 0x10b981 : 0x4a5568;
+    const borderColor = isActive ? 0xffd700 : 0x718096;
+    
+    bg.fillStyle(bgColor, 0.9);
+    bg.fillRoundedRect(-40, -20, 80, 40, 8);
+    bg.lineStyle(2, borderColor);
+    bg.strokeRoundedRect(-40, -20, 80, 40, 8);
+    
+    // Tab icon
+    const tabIcon = this.add.text(0, -8, icon, {
+      fontSize: '16px'
+    }).setOrigin(0.5);
+    
+    // Tab text
+    const tabText = this.add.text(0, 8, name, {
+      fontSize: '10px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    
+    tab.add([bg, tabIcon, tabText]);
+    this.categoryContainer.add(tab);
+    
+    // Add interactivity
+    tab.setInteractive(
+      new Phaser.Geom.Rectangle(-40, -20, 80, 40),
+      Phaser.Geom.Rectangle.Contains
+    );
+    
+    tab.on('pointerover', () => {
+      if (this.currentCategory !== categoryKey) {
+        bg.clear();
+        bg.fillStyle(0x68d391, 0.9);
+        bg.fillRoundedRect(-40, -20, 80, 40, 8);
+        bg.lineStyle(2, 0xffd700);
+        bg.strokeRoundedRect(-40, -20, 80, 40, 8);
+      }
+    });
+    
+    tab.on('pointerout', () => {
+      if (this.currentCategory !== categoryKey) {
+        bg.clear();
+        bg.fillStyle(0x4a5568, 0.9);
+        bg.fillRoundedRect(-40, -20, 80, 40, 8);
+        bg.lineStyle(2, 0x718096);
+        bg.strokeRoundedRect(-40, -20, 80, 40, 8);
+      }
+    });
+    
+    tab.on('pointerdown', () => {
+      this.switchCategory(categoryKey);
+    });
+  }
+  
+  private createItemsGrid(): void {
+    this.itemsContainer = this.add.container(0, 150);
+  }
+  
+  private createBackButton(): void {
+    this.backButton = this.add.container(60, this.scale.height - 40);
+    
+    const bg = this.add.graphics();
+    bg.fillStyle(0xdc2626, 0.8);
+    bg.fillRoundedRect(-40, -20, 80, 40, 10);
+    bg.lineStyle(2, 0xf87171);
+    bg.strokeRoundedRect(-40, -20, 80, 40, 10);
+    
+    const backText = this.add.text(0, 0, '← Back', {
+      fontSize: '16px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    
+    this.backButton.add([bg, backText]);
+    
+    this.backButton.setInteractive(
+      new Phaser.Geom.Rectangle(-40, -20, 80, 40),
+      Phaser.Geom.Rectangle.Contains
+    );
+    
+    this.backButton.on('pointerover', () => {
+      this.tweens.add({
+        targets: this.backButton,
+        scaleX: 1.05,
+        scaleY: 1.05,
+        duration: 100
+      });
+    });
+    
+    this.backButton.on('pointerout', () => {
+      this.tweens.add({
+        targets: this.backButton,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 100
+      });
+    });
+    
+    this.backButton.on('pointerdown', () => {
+      this.scene.start(this.returnScene, { gameState: this.gameState });
+    });
+  }
+  
+  private switchCategory(category: StoreItemType | 'all' | 'daily' | 'featured'): void {
+    this.currentCategory = category;
+    this.currentPage = 0;
+    
+    // Recreate category tabs with new active state
+    this.categoryContainer.destroy();
+    this.createCategoryTabs();
+    
+    // Update items display
+    this.updateItemsDisplay();
+  }
+  
+  private updateItemsDisplay(): void {
+    // Get items for current category
+    this.currentItems = this.getItemsForCategory();
+    
+    // Clear existing items
+    this.itemsContainer.removeAll(true);
+    
+    // Create item cards
+    const startIndex = this.currentPage * this.itemsPerPage;
+    const endIndex = Math.min(startIndex + this.itemsPerPage, this.currentItems.length);
+    const itemsToShow = this.currentItems.slice(startIndex, endIndex);
+    
+    const cardWidth = 140;
+    const cardHeight = 180;
+    const padding = 20;
+    const startX = (this.scale.width - (this.itemsPerRow * (cardWidth + padding))) / 2 + cardWidth / 2;
+    const startY = 40;
+    
+    itemsToShow.forEach((item, index) => {
+      const row = Math.floor(index / this.itemsPerRow);
+      const col = index % this.itemsPerRow;
+      const x = startX + col * (cardWidth + padding);
+      const y = startY + row * (cardHeight + padding);
+      
+      this.createItemCard(item, x, y, cardWidth, cardHeight);
+    });
+    
+    // Create pagination if needed
+    this.createPagination();
+  }
+  
+  private getItemsForCategory(): StoreItem[] {
+    switch (this.currentCategory) {
+      case 'all':
+        return this.storeSystem.getAvailableItems(this.gameState);
+        
+      case 'daily':
+        return this.storeSystem.getDailyOffers();
+        
+      case 'featured':
+        return this.storeSystem.getFeaturedItems(this.gameState);
+        
+      default:
+        return this.storeSystem.getItemsByType(this.currentCategory as StoreItemType)
+          .filter(item => this.storeSystem.isItemUnlocked(item, this.gameState));
+    }
+  }
+  
+  private createItemCard(
+    item: StoreItem,
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ): void {
+    const card = this.add.container(x, y);
+    
+    const isOwned = this.storeSystem.isItemOwned(item, this.gameState);
+    const canAfford = this.storeSystem.canAffordItem(item, this.gameState);
+    
+    // Card background
+    const bg = this.add.graphics();
+    const bgColor = isOwned ? 0x065f46 : (canAfford ? 0x1f2937 : 0x374151);
+    const borderColor = this.getRarityColor(item.rarity);
+    
+    bg.fillStyle(bgColor, 0.9);
+    bg.fillRoundedRect(-width/2, -height/2, width, height, 12);
+    bg.lineStyle(3, borderColor);
+    bg.strokeRoundedRect(-width/2, -height/2, width, height, 12);
+    
+    // Item icon/preview
+    const itemIcon = this.getItemIcon(item);
+    const icon = this.add.text(0, -50, itemIcon, {
+      fontSize: '32px'
+    }).setOrigin(0.5);
+    
+    // Item name
+    const name = this.add.text(0, -10, item.name, {
+      fontSize: '12px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#ffffff',
+      fontStyle: 'bold',
+      wordWrap: { width: width - 20 }
+    }).setOrigin(0.5);
+    
+    // Item description
+    const description = this.add.text(0, 15, item.description, {
+      fontSize: '9px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#cccccc',
+      wordWrap: { width: width - 20 },
+      align: 'center'
+    }).setOrigin(0.5);
+    
+    // Price and purchase button
+    let purchaseButton;
+    
+    if (isOwned && !item.isConsumable) {
+      // Owned indicator
+      purchaseButton = this.add.text(0, 65, 'OWNED', {
+        fontSize: '12px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#10b981',
+        fontStyle: 'bold'
+      }).setOrigin(0.5);
+    } else {
+      // Purchase button
+      const buttonBg = this.add.graphics();
+      const buttonColor = canAfford ? 0x10b981 : 0x6b7280;
+      
+      buttonBg.fillStyle(buttonColor, 0.9);
+      buttonBg.fillRoundedRect(-50, 50, 100, 25, 8);
+      
+      const currencyIcon = item.currency === 'coins' ? '🪙' : '💎';
+      const buttonText = this.add.text(
+        0,
+        62,
+        `${currencyIcon} ${item.price}`,
+        {
+          fontSize: '11px',
+          fontFamily: 'Arial, sans-serif',
+          color: '#ffffff',
+          fontStyle: 'bold'
+        }
+      ).setOrigin(0.5);
+      
+      purchaseButton = this.add.container(0, 0, [buttonBg, buttonText]);
+      
+      if (canAfford) {
+        purchaseButton.setInteractive(
+          new Phaser.Geom.Rectangle(-50, 50, 100, 25),
+          Phaser.Geom.Rectangle.Contains
+        );
+        
+        purchaseButton.on('pointerover', () => {
+          buttonBg.clear();
+          buttonBg.fillStyle(0x059669, 1);
+          buttonBg.fillRoundedRect(-50, 50, 100, 25, 8);
+        });
+        
+        purchaseButton.on('pointerout', () => {
+          buttonBg.clear();
+          buttonBg.fillStyle(0x10b981, 0.9);
+          buttonBg.fillRoundedRect(-50, 50, 100, 25, 8);
+        });
+        
+        purchaseButton.on('pointerdown', () => {
+          this.purchaseItem(item);
+        });
+      }
+    }
+    
+    // Rarity indicator
+    const rarityBadge = this.add.text(-width/2 + 8, -height/2 + 8, this.getRarityLabel(item.rarity), {
+      fontSize: '8px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#ffffff',
+      backgroundColor: this.getRarityColorHex(item.rarity),
+      padding: { x: 4, y: 2 }
+    });
+    
+    card.add([bg, icon, name, description, purchaseButton, rarityBadge]);
+    this.itemsContainer.add(card);
+    
+    // Add hover effect for the entire card
+    card.setInteractive(
+      new Phaser.Geom.Rectangle(-width/2, -height/2, width, height),
+      Phaser.Geom.Rectangle.Contains
+    );
+    
+    card.on('pointerover', () => {
+      this.tweens.add({
+        targets: card,
+        scaleX: 1.05,
+        scaleY: 1.05,
+        duration: 200,
+        ease: 'Back.easeOut'
+      });
+    });
+    
+    card.on('pointerout', () => {
+      this.tweens.add({
+        targets: card,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 200,
+        ease: 'Back.easeOut'
+      });
+    });
+  }
+  
+  private createPagination(): void {
+    const totalPages = Math.ceil(this.currentItems.length / this.itemsPerPage);
+    if (totalPages <= 1) return;
+    
+    const paginationY = this.scale.height - 80;
+    
+    // Previous button
+    if (this.currentPage > 0) {
+      const prevButton = this.createPaginationButton(
+        this.scale.width / 2 - 60,
+        paginationY,
+        '◀',
+        () => {
+          this.currentPage--;
+          this.updateItemsDisplay();
+        }
+      );
+    }
+    
+    // Page indicator
+    this.add.text(
+      this.scale.width / 2,
+      paginationY,
+      `${this.currentPage + 1} / ${totalPages}`,
+      {
+        fontSize: '14px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#ffffff'
+      }
+    ).setOrigin(0.5);
+    
+    // Next button
+    if (this.currentPage < totalPages - 1) {
+      const nextButton = this.createPaginationButton(
+        this.scale.width / 2 + 60,
+        paginationY,
+        '▶',
+        () => {
+          this.currentPage++;
+          this.updateItemsDisplay();
+        }
+      );
+    }
+  }
+  
+  private createPaginationButton(
+    x: number,
+    y: number,
+    text: string,
+    callback: () => void
+  ): Phaser.GameObjects.Container {
+    const button = this.add.container(x, y);
+    
+    const bg = this.add.graphics();
+    bg.fillStyle(0x4a5568, 0.8);
+    bg.fillCircle(0, 0, 20);
+    bg.lineStyle(2, 0x718096);
+    bg.strokeCircle(0, 0, 20);
+    
+    const buttonText = this.add.text(0, 0, text, {
+      fontSize: '16px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    
+    button.add([bg, buttonText]);
+    this.itemsContainer.add(button);
+    
+    button.setInteractive(
+      new Phaser.Geom.Circle(0, 0, 20),
+      Phaser.Geom.Circle.Contains
+    );
+    
+    button.on('pointerover', () => {
+      bg.clear();
+      bg.fillStyle(0x10b981, 1);
+      bg.fillCircle(0, 0, 20);
+      bg.lineStyle(2, 0xffd700);
+      bg.strokeCircle(0, 0, 20);
+    });
+    
+    button.on('pointerout', () => {
+      bg.clear();
+      bg.fillStyle(0x4a5568, 0.8);
+      bg.fillCircle(0, 0, 20);
+      bg.lineStyle(2, 0x718096);
+      bg.strokeCircle(0, 0, 20);
+    });
+    
+    button.on('pointerdown', callback);
+    
+    return button;
+  }
+  
+  private purchaseItem(item: StoreItem): void {
+    const result = this.storeSystem.purchaseItem(item.id, this.gameState);
+    
+    if (result.success && result.newGameState) {
+      this.gameState = result.newGameState;
+      
+      // Update coin display
+      const coinText = this.coinDisplay.getAt(2) as Phaser.GameObjects.Text;
+      coinText.setText(this.gameState.coins.toString());
+      
+      // Show purchase success effect
+      this.showPurchaseSuccess(item);
+      
+      // Refresh the display
+      this.updateItemsDisplay();
+    } else {
+      // Show error message
+      this.showPurchaseError(result.message);
+    }
+  }
+  
+  private showPurchaseSuccess(item: StoreItem): void {
+    const successText = this.add.text(
+      this.scale.width / 2,
+      this.scale.height / 2,
+      `${item.name} purchased!`,
+      {
+        fontSize: '24px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#10b981',
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 2
+      }
+    ).setOrigin(0.5);
+    
+    this.tweens.add({
+      targets: successText,
+      y: successText.y - 50,
+      alpha: 0,
+      duration: 2000,
+      ease: 'Quad.easeOut',
+      onComplete: () => successText.destroy()
+    });
+  }
+  
+  private showPurchaseError(message: string): void {
+    const errorText = this.add.text(
+      this.scale.width / 2,
+      this.scale.height / 2,
+      message,
+      {
+        fontSize: '18px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#ef4444',
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 2
+      }
+    ).setOrigin(0.5);
+    
+    this.tweens.add({
+      targets: errorText,
+      alpha: 0,
+      duration: 3000,
+      ease: 'Quad.easeOut',
+      onComplete: () => errorText.destroy()
+    });
+  }
+  
+  // Helper methods
+  private getItemIcon(item: StoreItem): string {
+    const icons: Record<string, string> = {
+      // Skins
+      classic_skin: '🐍',
+      rainbow_skin: '🌈',
+      metal_skin: '🤖',
+      fire_skin: '🔥',
+      galaxy_skin: '🌌',
+      shadow_skin: '👤',
+      
+      // Themes
+      neon_theme: '🌃',
+      retro_theme: '👾',
+      nature_theme: '🌲',
+      space_theme: '🚀',
+      
+      // Power-ups
+      speed_boost: '⚡',
+      shield_power: '🛡️',
+      coin_magnet: '🧲',
+      double_points: '✖️',
+      food_rain: '🌧️',
+      time_freeze: '❄️',
+      
+      // Boosters
+      coin_boost_10: '💰',
+      coin_boost_25: '💸',
+      xp_boost_15: '📈',
+      lucky_food: '🍀',
+      
+      // Lives
+      extra_life: '❤️',
+      life_pack_5: '💕'
+    };
+    
+    return icons[item.id] || '📦';
+  }
+  
+  private getRarityColor(rarity: string): number {
+    const colors: Record<string, number> = {
+      common: 0x6b7280,
+      rare: 0x3b82f6,
+      epic: 0x8b5cf6,
+      legendary: 0xf59e0b
+    };
+    return colors[rarity] || colors.common;
+  }
+  
+  private getRarityColorHex(rarity: string): string {
+    const colors: Record<string, string> = {
+      common: '#6b7280',
+      rare: '#3b82f6',
+      epic: '#8b5cf6',
+      legendary: '#f59e0b'
+    };
+    return colors[rarity] || colors.common;
+  }
+  
+  private getRarityLabel(rarity: string): string {
+    return rarity.toUpperCase();
+  }
+}

@@ -16,4 +16,482 @@ export class SoundManager {
     this.preloadSounds();
   }
   
-  private preloadSounds(): void {\n    // Note: In a real implementation, you would load actual audio files\n    // For now, we'll create placeholder sounds using Web Audio API\n    \n    this.createSynthSounds();\n  }\n  \n  private createSynthSounds(): void {\n    // Create synthetic sounds using Web Audio API for immediate functionality\n    // These would be replaced with actual audio files in production\n    \n    const audioContext = (this.scene.sound as any).context;\n    if (!audioContext) return;\n    \n    // Food eaten sound (short beep)\n    this.createBeepSound('food_eaten', 440, 0.1, 'triangle');\n    \n    // Golden apple sound (higher pitched beep)\n    this.createBeepSound('golden_apple', 660, 0.15, 'sine');\n    \n    // Power-up activation (ascending notes)\n    this.createPowerUpSound('power_up', [330, 440, 550], 0.3);\n    \n    // Game over sound (descending notes)\n    this.createGameOverSound('game_over');\n    \n    // Level complete (victory fanfare)\n    this.createVictorySound('level_complete');\n    \n    // Button click\n    this.createBeepSound('button_click', 220, 0.05, 'square');\n    \n    // Purchase success\n    this.createChimeSound('purchase_success');\n    \n    // Snake movement (subtle tick)\n    this.createTickSound('snake_move');\n    \n    // Bomb food warning\n    this.createWarningSound('bomb_warning');\n    \n    // Speed boost effect\n    this.createWhooshSound('speed_boost');\n  }\n  \n  private createBeepSound(\n    name: string, \n    frequency: number, \n    duration: number, \n    waveType: OscillatorType = 'sine'\n  ): void {\n    // Create a simple beep sound\n    const sound = {\n      play: () => {\n        if (!this.sfxEnabled) return;\n        \n        const audioContext = new AudioContext();\n        const oscillator = audioContext.createOscillator();\n        const gainNode = audioContext.createGain();\n        \n        oscillator.connect(gainNode);\n        gainNode.connect(audioContext.destination);\n        \n        oscillator.frequency.value = frequency;\n        oscillator.type = waveType;\n        \n        gainNode.gain.setValueAtTime(this.sfxVolume * 0.3, audioContext.currentTime);\n        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);\n        \n        oscillator.start();\n        oscillator.stop(audioContext.currentTime + duration);\n      },\n      setVolume: (volume: number) => {}, // Placeholder\n      stop: () => {} // Placeholder\n    };\n    \n    this.sounds.set(name, sound as any);\n  }\n  \n  private createPowerUpSound(name: string, frequencies: number[], duration: number): void {\n    const sound = {\n      play: () => {\n        if (!this.sfxEnabled) return;\n        \n        frequencies.forEach((freq, index) => {\n          setTimeout(() => {\n            const audioContext = new AudioContext();\n            const oscillator = audioContext.createOscillator();\n            const gainNode = audioContext.createGain();\n            \n            oscillator.connect(gainNode);\n            gainNode.connect(audioContext.destination);\n            \n            oscillator.frequency.value = freq;\n            oscillator.type = 'sine';\n            \n            gainNode.gain.setValueAtTime(this.sfxVolume * 0.2, audioContext.currentTime);\n            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);\n            \n            oscillator.start();\n            oscillator.stop(audioContext.currentTime + 0.2);\n          }, index * 100);\n        });\n      },\n      setVolume: (volume: number) => {},\n      stop: () => {}\n    };\n    \n    this.sounds.set(name, sound as any);\n  }\n  \n  private createGameOverSound(name: string): void {\n    const sound = {\n      play: () => {\n        if (!this.sfxEnabled) return;\n        \n        const frequencies = [440, 369, 329, 293]; // A4, F#4, E4, D4\n        frequencies.forEach((freq, index) => {\n          setTimeout(() => {\n            const audioContext = new AudioContext();\n            const oscillator = audioContext.createOscillator();\n            const gainNode = audioContext.createGain();\n            \n            oscillator.connect(gainNode);\n            gainNode.connect(audioContext.destination);\n            \n            oscillator.frequency.value = freq;\n            oscillator.type = 'sine';\n            \n            gainNode.gain.setValueAtTime(this.sfxVolume * 0.3, audioContext.currentTime);\n            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);\n            \n            oscillator.start();\n            oscillator.stop(audioContext.currentTime + 0.5);\n          }, index * 200);\n        });\n      },\n      setVolume: (volume: number) => {},\n      stop: () => {}\n    };\n    \n    this.sounds.set(name, sound as any);\n  }\n  \n  private createVictorySound(name: string): void {\n    const sound = {\n      play: () => {\n        if (!this.sfxEnabled) return;\n        \n        const melody = [261, 329, 392, 523]; // C4, E4, G4, C5\n        melody.forEach((freq, index) => {\n          setTimeout(() => {\n            const audioContext = new AudioContext();\n            const oscillator = audioContext.createOscillator();\n            const gainNode = audioContext.createGain();\n            \n            oscillator.connect(gainNode);\n            gainNode.connect(audioContext.destination);\n            \n            oscillator.frequency.value = freq;\n            oscillator.type = 'triangle';\n            \n            gainNode.gain.setValueAtTime(this.sfxVolume * 0.4, audioContext.currentTime);\n            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);\n            \n            oscillator.start();\n            oscillator.stop(audioContext.currentTime + 0.3);\n          }, index * 150);\n        });\n      },\n      setVolume: (volume: number) => {},\n      stop: () => {}\n    };\n    \n    this.sounds.set(name, sound as any);\n  }\n  \n  private createChimeSound(name: string): void {\n    const sound = {\n      play: () => {\n        if (!this.sfxEnabled) return;\n        \n        [523, 659, 784].forEach((freq, index) => {\n          setTimeout(() => {\n            const audioContext = new AudioContext();\n            const oscillator = audioContext.createOscillator();\n            const gainNode = audioContext.createGain();\n            \n            oscillator.connect(gainNode);\n            gainNode.connect(audioContext.destination);\n            \n            oscillator.frequency.value = freq;\n            oscillator.type = 'sine';\n            \n            gainNode.gain.setValueAtTime(this.sfxVolume * 0.2, audioContext.currentTime);\n            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);\n            \n            oscillator.start();\n            oscillator.stop(audioContext.currentTime + 0.4);\n          }, index * 100);\n        });\n      },\n      setVolume: (volume: number) => {},\n      stop: () => {}\n    };\n    \n    this.sounds.set(name, sound as any);\n  }\n  \n  private createTickSound(name: string): void {\n    const sound = {\n      play: () => {\n        if (!this.sfxEnabled) return;\n        \n        const audioContext = new AudioContext();\n        const oscillator = audioContext.createOscillator();\n        const gainNode = audioContext.createGain();\n        \n        oscillator.connect(gainNode);\n        gainNode.connect(audioContext.destination);\n        \n        oscillator.frequency.value = 800;\n        oscillator.type = 'square';\n        \n        gainNode.gain.setValueAtTime(this.sfxVolume * 0.1, audioContext.currentTime);\n        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.02);\n        \n        oscillator.start();\n        oscillator.stop(audioContext.currentTime + 0.02);\n      },\n      setVolume: (volume: number) => {},\n      stop: () => {}\n    };\n    \n    this.sounds.set(name, sound as any);\n  }\n  \n  private createWarningSound(name: string): void {\n    const sound = {\n      play: () => {\n        if (!this.sfxEnabled) return;\n        \n        for (let i = 0; i < 3; i++) {\n          setTimeout(() => {\n            const audioContext = new AudioContext();\n            const oscillator = audioContext.createOscillator();\n            const gainNode = audioContext.createGain();\n            \n            oscillator.connect(gainNode);\n            gainNode.connect(audioContext.destination);\n            \n            oscillator.frequency.value = 200;\n            oscillator.type = 'sawtooth';\n            \n            gainNode.gain.setValueAtTime(this.sfxVolume * 0.3, audioContext.currentTime);\n            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);\n            \n            oscillator.start();\n            oscillator.stop(audioContext.currentTime + 0.1);\n          }, i * 150);\n        }\n      },\n      setVolume: (volume: number) => {},\n      stop: () => {}\n    };\n    \n    this.sounds.set(name, sound as any);\n  }\n  \n  private createWhooshSound(name: string): void {\n    const sound = {\n      play: () => {\n        if (!this.sfxEnabled) return;\n        \n        const audioContext = new AudioContext();\n        const oscillator = audioContext.createOscillator();\n        const gainNode = audioContext.createGain();\n        \n        oscillator.connect(gainNode);\n        gainNode.connect(audioContext.destination);\n        \n        oscillator.frequency.setValueAtTime(1000, audioContext.currentTime);\n        oscillator.frequency.exponentialRampToValueAtTime(2000, audioContext.currentTime + 0.3);\n        oscillator.type = 'sawtooth';\n        \n        gainNode.gain.setValueAtTime(this.sfxVolume * 0.2, audioContext.currentTime);\n        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);\n        \n        oscillator.start();\n        oscillator.stop(audioContext.currentTime + 0.3);\n      },\n      setVolume: (volume: number) => {},\n      stop: () => {}\n    };\n    \n    this.sounds.set(name, sound as any);\n  }\n  \n  // Public methods\n  \n  /**\n   * Play a sound effect\n   */\n  public playSound(soundName: string, volume?: number): void {\n    const sound = this.sounds.get(soundName);\n    if (!sound || !this.sfxEnabled) return;\n    \n    if (volume !== undefined) {\n      sound.setVolume(volume * this.sfxVolume);\n    }\n    \n    sound.play();\n  }\n  \n  /**\n   * Play food eaten sound based on food type\n   */\n  public playFoodSound(foodType: string): void {\n    switch (foodType) {\n      case 'golden':\n        this.playSound('golden_apple');\n        break;\n      case 'speed':\n      case 'power':\n      case 'multi':\n        this.playSound('power_up');\n        break;\n      case 'bomb':\n        this.playSound('bomb_warning');\n        break;\n      default:\n        this.playSound('food_eaten');\n    }\n  }\n  \n  /**\n   * Play background music (looped)\n   */\n  public playMusic(musicName: string, loop: boolean = true): void {\n    if (!this.musicEnabled) return;\n    \n    // Stop current music\n    this.stopMusic();\n    \n    // In a real implementation, you would load and play actual music files\n    // For now, we'll create a simple ambient background tone\n    this.createBackgroundMusic(musicName);\n  }\n  \n  private createBackgroundMusic(name: string): void {\n    if (!this.musicEnabled) return;\n    \n    // Create a subtle ambient background tone\n    const audioContext = new AudioContext();\n    const oscillator1 = audioContext.createOscillator();\n    const oscillator2 = audioContext.createOscillator();\n    const gainNode = audioContext.createGain();\n    \n    oscillator1.connect(gainNode);\n    oscillator2.connect(gainNode);\n    gainNode.connect(audioContext.destination);\n    \n    // Create a subtle pad sound\n    oscillator1.frequency.value = 110; // Low A\n    oscillator2.frequency.value = 165; // E above A\n    oscillator1.type = 'sine';\n    oscillator2.type = 'sine';\n    \n    gainNode.gain.setValueAtTime(this.musicVolume * 0.1, audioContext.currentTime);\n    \n    oscillator1.start();\n    oscillator2.start();\n    \n    // Store reference for stopping later\n    this.sounds.set('background_music', {\n      play: () => {},\n      setVolume: (volume: number) => {\n        gainNode.gain.setValueAtTime(volume * this.musicVolume * 0.1, audioContext.currentTime);\n      },\n      stop: () => {\n        oscillator1.stop();\n        oscillator2.stop();\n      }\n    } as any);\n  }\n  \n  /**\n   * Stop background music\n   */\n  public stopMusic(): void {\n    const music = this.sounds.get('background_music');\n    if (music) {\n      music.stop();\n      this.sounds.delete('background_music');\n    }\n  }\n  \n  /**\n   * Set music volume (0-1)\n   */\n  public setMusicVolume(volume: number): void {\n    this.musicVolume = Math.max(0, Math.min(1, volume));\n    \n    const music = this.sounds.get('background_music');\n    if (music) {\n      music.setVolume(this.musicVolume);\n    }\n  }\n  \n  /**\n   * Set sound effects volume (0-1)\n   */\n  public setSFXVolume(volume: number): void {\n    this.sfxVolume = Math.max(0, Math.min(1, volume));\n  }\n  \n  /**\n   * Enable/disable music\n   */\n  public setMusicEnabled(enabled: boolean): void {\n    this.musicEnabled = enabled;\n    \n    if (!enabled) {\n      this.stopMusic();\n    }\n  }\n  \n  /**\n   * Enable/disable sound effects\n   */\n  public setSFXEnabled(enabled: boolean): void {\n    this.sfxEnabled = enabled;\n  }\n  \n  /**\n   * Get current music volume\n   */\n  public getMusicVolume(): number {\n    return this.musicVolume;\n  }\n  \n  /**\n   * Get current SFX volume\n   */\n  public getSFXVolume(): number {\n    return this.sfxVolume;\n  }\n  \n  /**\n   * Check if music is enabled\n   */\n  public isMusicEnabled(): boolean {\n    return this.musicEnabled;\n  }\n  \n  /**\n   * Check if SFX is enabled\n   */\n  public isSFXEnabled(): boolean {\n    return this.sfxEnabled;\n  }\n  \n  /**\n   * Stop all sounds\n   */\n  public stopAllSounds(): void {\n    this.sounds.forEach(sound => {\n      sound.stop();\n    });\n    this.sounds.clear();\n  }\n  \n  /**\n   * Cleanup resources\n   */\n  public destroy(): void {\n    this.stopAllSounds();\n  }\n}
+  private preloadSounds(): void {
+    // Note: In a real implementation, you would load actual audio files
+    // For now, we'll create placeholder sounds using Web Audio API
+    
+    this.createSynthSounds();
+  }
+  
+  private createSynthSounds(): void {
+    // Create synthetic sounds using Web Audio API for immediate functionality
+    // These would be replaced with actual audio files in production
+    
+    const audioContext = (this.scene.sound as any).context;
+    if (!audioContext) return;
+    
+    // Food eaten sound (short beep)
+    this.createBeepSound('food_eaten', 440, 0.1, 'triangle');
+    
+    // Golden apple sound (higher pitched beep)
+    this.createBeepSound('golden_apple', 660, 0.15, 'sine');
+    
+    // Power-up activation (ascending notes)
+    this.createPowerUpSound('power_up', [330, 440, 550], 0.3);
+    
+    // Game over sound (descending notes)
+    this.createGameOverSound('game_over');
+    
+    // Level complete (victory fanfare)
+    this.createVictorySound('level_complete');
+    
+    // Button click
+    this.createBeepSound('button_click', 220, 0.05, 'square');
+    
+    // Purchase success
+    this.createChimeSound('purchase_success');
+    
+    // Snake movement (subtle tick)
+    this.createTickSound('snake_move');
+    
+    // Bomb food warning
+    this.createWarningSound('bomb_warning');
+    
+    // Speed boost effect
+    this.createWhooshSound('speed_boost');
+  }
+  
+  private createBeepSound(
+    name: string, 
+    frequency: number, 
+    duration: number, 
+    waveType: OscillatorType = 'sine'
+  ): void {
+    // Create a simple beep sound
+    const sound = {
+      play: () => {
+        if (!this.sfxEnabled) return;
+        
+        const audioContext = new AudioContext();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = frequency;
+        oscillator.type = waveType;
+        
+        gainNode.gain.setValueAtTime(this.sfxVolume * 0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + duration);
+      },
+      setVolume: (volume: number) => {}, // Placeholder
+      stop: () => {} // Placeholder
+    };
+    
+    this.sounds.set(name, sound as any);
+  }
+  
+  private createPowerUpSound(name: string, frequencies: number[], duration: number): void {
+    const sound = {
+      play: () => {
+        if (!this.sfxEnabled) return;
+        
+        frequencies.forEach((freq, index) => {
+          setTimeout(() => {
+            const audioContext = new AudioContext();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = freq;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(this.sfxVolume * 0.2, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.2);
+          }, index * 100);
+        });
+      },
+      setVolume: (volume: number) => {},
+      stop: () => {}
+    };
+    
+    this.sounds.set(name, sound as any);
+  }
+  
+  private createGameOverSound(name: string): void {
+    const sound = {
+      play: () => {
+        if (!this.sfxEnabled) return;
+        
+        const frequencies = [440, 369, 329, 293]; // A4, F#4, E4, D4
+        frequencies.forEach((freq, index) => {
+          setTimeout(() => {
+            const audioContext = new AudioContext();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = freq;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(this.sfxVolume * 0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.5);
+          }, index * 200);
+        });
+      },
+      setVolume: (volume: number) => {},
+      stop: () => {}
+    };
+    
+    this.sounds.set(name, sound as any);
+  }
+  
+  private createVictorySound(name: string): void {
+    const sound = {
+      play: () => {
+        if (!this.sfxEnabled) return;
+        
+        const melody = [261, 329, 392, 523]; // C4, E4, G4, C5
+        melody.forEach((freq, index) => {
+          setTimeout(() => {
+            const audioContext = new AudioContext();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = freq;
+            oscillator.type = 'triangle';
+            
+            gainNode.gain.setValueAtTime(this.sfxVolume * 0.4, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.3);
+          }, index * 150);
+        });
+      },
+      setVolume: (volume: number) => {},
+      stop: () => {}
+    };
+    
+    this.sounds.set(name, sound as any);
+  }
+  
+  private createChimeSound(name: string): void {
+    const sound = {
+      play: () => {
+        if (!this.sfxEnabled) return;
+        
+        [523, 659, 784].forEach((freq, index) => {
+          setTimeout(() => {
+            const audioContext = new AudioContext();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = freq;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(this.sfxVolume * 0.2, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.4);
+          }, index * 100);
+        });
+      },
+      setVolume: (volume: number) => {},
+      stop: () => {}
+    };
+    
+    this.sounds.set(name, sound as any);
+  }
+  
+  private createTickSound(name: string): void {
+    const sound = {
+      play: () => {
+        if (!this.sfxEnabled) return;
+        
+        const audioContext = new AudioContext();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'square';
+        
+        gainNode.gain.setValueAtTime(this.sfxVolume * 0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.02);
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.02);
+      },
+      setVolume: (volume: number) => {},
+      stop: () => {}
+    };
+    
+    this.sounds.set(name, sound as any);
+  }
+  
+  private createWarningSound(name: string): void {
+    const sound = {
+      play: () => {
+        if (!this.sfxEnabled) return;
+        
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => {
+            const audioContext = new AudioContext();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 200;
+            oscillator.type = 'sawtooth';
+            
+            gainNode.gain.setValueAtTime(this.sfxVolume * 0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.1);
+          }, i * 150);
+        }
+      },
+      setVolume: (volume: number) => {},
+      stop: () => {}
+    };
+    
+    this.sounds.set(name, sound as any);
+  }
+  
+  private createWhooshSound(name: string): void {
+    const sound = {
+      play: () => {
+        if (!this.sfxEnabled) return;
+        
+        const audioContext = new AudioContext();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(1000, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(2000, audioContext.currentTime + 0.3);
+        oscillator.type = 'sawtooth';
+        
+        gainNode.gain.setValueAtTime(this.sfxVolume * 0.2, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.3);
+      },
+      setVolume: (volume: number) => {},
+      stop: () => {}
+    };
+    
+    this.sounds.set(name, sound as any);
+  }
+  
+  // Public methods
+  
+  /**
+   * Play a sound effect
+   */
+  public playSound(soundName: string, volume?: number): void {
+    const sound = this.sounds.get(soundName);
+    if (!sound || !this.sfxEnabled) return;
+    
+    if (volume !== undefined) {
+      sound.setVolume(volume * this.sfxVolume);
+    }
+    
+    sound.play();
+  }
+  
+  /**
+   * Play food eaten sound based on food type
+   */
+  public playFoodSound(foodType: string): void {
+    switch (foodType) {
+      case 'golden':
+        this.playSound('golden_apple');
+        break;
+      case 'speed':
+      case 'power':
+      case 'multi':
+        this.playSound('power_up');
+        break;
+      case 'bomb':
+        this.playSound('bomb_warning');
+        break;
+      default:
+        this.playSound('food_eaten');
+    }
+  }
+  
+  /**
+   * Play background music (looped)
+   */
+  public playMusic(musicName: string, loop: boolean = true): void {
+    if (!this.musicEnabled) return;
+    
+    // Stop current music
+    this.stopMusic();
+    
+    // In a real implementation, you would load and play actual music files
+    // For now, we'll create a simple ambient background tone
+    this.createBackgroundMusic(musicName);
+  }
+  
+  private createBackgroundMusic(name: string): void {
+    if (!this.musicEnabled) return;
+    
+    // Create a subtle ambient background tone
+    const audioContext = new AudioContext();
+    const oscillator1 = audioContext.createOscillator();
+    const oscillator2 = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator1.connect(gainNode);
+    oscillator2.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    // Create a subtle pad sound
+    oscillator1.frequency.value = 110; // Low A
+    oscillator2.frequency.value = 165; // E above A
+    oscillator1.type = 'sine';
+    oscillator2.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(this.musicVolume * 0.1, audioContext.currentTime);
+    
+    oscillator1.start();
+    oscillator2.start();
+    
+    // Store reference for stopping later
+    this.sounds.set('background_music', {
+      play: () => {},
+      setVolume: (volume: number) => {
+        gainNode.gain.setValueAtTime(volume * this.musicVolume * 0.1, audioContext.currentTime);
+      },
+      stop: () => {
+        oscillator1.stop();
+        oscillator2.stop();
+      }
+    } as any);
+  }
+  
+  /**
+   * Stop background music
+   */
+  public stopMusic(): void {
+    const music = this.sounds.get('background_music');
+    if (music) {
+      music.stop();
+      this.sounds.delete('background_music');
+    }
+  }
+  
+  /**
+   * Set music volume (0-1)
+   */
+  public setMusicVolume(volume: number): void {
+    this.musicVolume = Math.max(0, Math.min(1, volume));
+    
+    const music = this.sounds.get('background_music');
+    if (music) {
+      music.setVolume(this.musicVolume);
+    }
+  }
+  
+  /**
+   * Set sound effects volume (0-1)
+   */
+  public setSFXVolume(volume: number): void {
+    this.sfxVolume = Math.max(0, Math.min(1, volume));
+  }
+  
+  /**
+   * Enable/disable music
+   */
+  public setMusicEnabled(enabled: boolean): void {
+    this.musicEnabled = enabled;
+    
+    if (!enabled) {
+      this.stopMusic();
+    }
+  }
+  
+  /**
+   * Enable/disable sound effects
+   */
+  public setSFXEnabled(enabled: boolean): void {
+    this.sfxEnabled = enabled;
+  }
+  
+  /**
+   * Get current music volume
+   */
+  public getMusicVolume(): number {
+    return this.musicVolume;
+  }
+  
+  /**
+   * Get current SFX volume
+   */
+  public getSFXVolume(): number {
+    return this.sfxVolume;
+  }
+  
+  /**
+   * Check if music is enabled
+   */
+  public isMusicEnabled(): boolean {
+    return this.musicEnabled;
+  }
+  
+  /**
+   * Check if SFX is enabled
+   */
+  public isSFXEnabled(): boolean {
+    return this.sfxEnabled;
+  }
+  
+  /**
+   * Stop all sounds
+   */
+  public stopAllSounds(): void {
+    this.sounds.forEach(sound => {
+      sound.stop();
+    });
+    this.sounds.clear();
+  }
+  
+  /**
+   * Cleanup resources
+   */
+  public destroy(): void {
+    this.stopAllSounds();
+  }
+}

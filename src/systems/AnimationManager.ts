@@ -8,4 +8,648 @@ export class AnimationManager {
   private particles: Phaser.GameObjects.Particles.ParticleEmitter[] = [];
   private tweens: Phaser.Tweens.Tween[] = [];
   
-  constructor(scene: Phaser.Scene) {\n    this.scene = scene;\n  }\n  \n  /**\n   * Create food consumption animation\n   */\n  public animateFoodConsumption(x: number, y: number, foodType: string): void {\n    const tileSize = 20;\n    const worldX = x * tileSize + tileSize / 2;\n    const worldY = y * tileSize + tileSize / 2;\n    \n    // Create particle burst\n    this.createFoodParticles(worldX, worldY, foodType);\n    \n    // Create score popup\n    this.createScorePopup(worldX, worldY, this.getFoodScore(foodType));\n    \n    // Create ripple effect\n    this.createRippleEffect(worldX, worldY, this.getFoodColor(foodType));\n  }\n  \n  private createFoodParticles(x: number, y: number, foodType: string): void {\n    const config = this.getFoodParticleConfig(foodType);\n    \n    // Create temporary graphics for particle texture\n    const graphics = this.scene.add.graphics();\n    graphics.fillStyle(config.color);\n    graphics.fillRect(0, 0, 4, 4);\n    graphics.generateTexture('particle_' + foodType, 4, 4);\n    graphics.destroy();\n    \n    // Create particle emitter\n    const emitter = this.scene.add.particles(x, y, 'particle_' + foodType, {\n      speed: { min: 50, max: 150 },\n      scale: { start: 0.8, end: 0 },\n      lifespan: config.lifespan,\n      quantity: config.quantity,\n      frequency: -1, // Explode once\n      blendMode: config.blendMode || 'NORMAL'\n    });\n    \n    // Auto-destroy after animation\n    this.scene.time.delayedCall(config.lifespan + 100, () => {\n      emitter.destroy();\n      this.scene.textures.remove('particle_' + foodType);\n    });\n  }\n  \n  private getFoodParticleConfig(foodType: string): any {\n    const configs: Record<string, any> = {\n      apple: {\n        color: 0xff4444,\n        quantity: 8,\n        lifespan: 600,\n        blendMode: 'NORMAL'\n      },\n      golden: {\n        color: 0xffd700,\n        quantity: 12,\n        lifespan: 800,\n        blendMode: 'ADD'\n      },\n      speed: {\n        color: 0x00ffff,\n        quantity: 10,\n        lifespan: 700,\n        blendMode: 'ADD'\n      },\n      power: {\n        color: 0xffff00,\n        quantity: 15,\n        lifespan: 1000,\n        blendMode: 'ADD'\n      },\n      multi: {\n        color: 0x00ff00,\n        quantity: 20,\n        lifespan: 900,\n        blendMode: 'NORMAL'\n      },\n      bomb: {\n        color: 0xff0000,\n        quantity: 25,\n        lifespan: 1200,\n        blendMode: 'ADD'\n      }\n    };\n    \n    return configs[foodType] || configs.apple;\n  }\n  \n  private createScorePopup(x: number, y: number, score: number): void {\n    const text = this.scene.add.text(x, y, `+${score}`, {\n      fontSize: '16px',\n      fontFamily: 'Arial, sans-serif',\n      color: '#ffffff',\n      stroke: '#000000',\n      strokeThickness: 2,\n      fontStyle: 'bold'\n    }).setOrigin(0.5);\n    \n    // Animate popup\n    const tween = this.scene.tweens.add({\n      targets: text,\n      y: y - 50,\n      alpha: 0,\n      scale: 1.5,\n      duration: 1000,\n      ease: 'Quad.easeOut',\n      onComplete: () => {\n        text.destroy();\n        const index = this.tweens.indexOf(tween);\n        if (index > -1) this.tweens.splice(index, 1);\n      }\n    });\n    \n    this.tweens.push(tween);\n  }\n  \n  private createRippleEffect(x: number, y: number, color: number): void {\n    const graphics = this.scene.add.graphics();\n    graphics.lineStyle(3, color, 0.8);\n    graphics.strokeCircle(x, y, 5);\n    \n    const tween = this.scene.tweens.add({\n      targets: graphics,\n      scaleX: 4,\n      scaleY: 4,\n      alpha: 0,\n      duration: 400,\n      ease: 'Quad.easeOut',\n      onComplete: () => {\n        graphics.destroy();\n        const index = this.tweens.indexOf(tween);\n        if (index > -1) this.tweens.splice(index, 1);\n      }\n    });\n    \n    this.tweens.push(tween);\n  }\n  \n  /**\n   * Animate snake growth\n   */\n  public animateSnakeGrowth(segments: { x: number, y: number }[]): void {\n    if (segments.length === 0) return;\n    \n    const lastSegment = segments[segments.length - 1];\n    const tileSize = 20;\n    const worldX = lastSegment.x * tileSize;\n    const worldY = lastSegment.y * tileSize;\n    \n    // Create temporary segment that scales in\n    const tempSegment = this.scene.add.rectangle(\n      worldX + tileSize / 2,\n      worldY + tileSize / 2,\n      tileSize,\n      tileSize,\n      0x66cc66\n    );\n    \n    tempSegment.setScale(0);\n    \n    const tween = this.scene.tweens.add({\n      targets: tempSegment,\n      scaleX: 1,\n      scaleY: 1,\n      duration: 200,\n      ease: 'Back.easeOut',\n      onComplete: () => {\n        tempSegment.destroy();\n        const index = this.tweens.indexOf(tween);\n        if (index > -1) this.tweens.splice(index, 1);\n      }\n    });\n    \n    this.tweens.push(tween);\n  }\n  \n  /**\n   * Create death animation\n   */\n  public animateGameOver(snakeSegments: { x: number, y: number }[]): void {\n    const tileSize = 20;\n    \n    // Create explosion at head\n    if (snakeSegments.length > 0) {\n      const head = snakeSegments[0];\n      const headX = head.x * tileSize + tileSize / 2;\n      const headY = head.y * tileSize + tileSize / 2;\n      \n      this.createExplosion(headX, headY);\n    }\n    \n    // Animate segments disappearing\n    snakeSegments.forEach((segment, index) => {\n      const segmentX = segment.x * tileSize + tileSize / 2;\n      const segmentY = segment.y * tileSize + tileSize / 2;\n      \n      this.scene.time.delayedCall(index * 50, () => {\n        this.createSegmentDisappear(segmentX, segmentY);\n      });\n    });\n  }\n  \n  private createExplosion(x: number, y: number): void {\n    // Create explosion texture\n    const graphics = this.scene.add.graphics();\n    graphics.fillStyle(0xff4444);\n    graphics.fillRect(0, 0, 6, 6);\n    graphics.generateTexture('explosion_particle', 6, 6);\n    graphics.destroy();\n    \n    const emitter = this.scene.add.particles(x, y, 'explosion_particle', {\n      speed: { min: 100, max: 300 },\n      scale: { start: 1, end: 0 },\n      lifespan: 800,\n      quantity: 30,\n      frequency: -1,\n      blendMode: 'ADD'\n    });\n    \n    this.scene.time.delayedCall(1000, () => {\n      emitter.destroy();\n      this.scene.textures.remove('explosion_particle');\n    });\n  }\n  \n  private createSegmentDisappear(x: number, y: number): void {\n    const segment = this.scene.add.rectangle(x, y, 20, 20, 0x66cc66);\n    \n    const tween = this.scene.tweens.add({\n      targets: segment,\n      scaleX: 0,\n      scaleY: 0,\n      alpha: 0,\n      rotation: Math.PI,\n      duration: 300,\n      ease: 'Back.easeIn',\n      onComplete: () => {\n        segment.destroy();\n        const index = this.tweens.indexOf(tween);\n        if (index > -1) this.tweens.splice(index, 1);\n      }\n    });\n    \n    this.tweens.push(tween);\n  }\n  \n  /**\n   * Create level complete celebration\n   */\n  public animateLevelComplete(): void {\n    this.createConfettiExplosion();\n    this.createVictoryText();\n    this.createFireworks();\n  }\n  \n  private createConfettiExplosion(): void {\n    const colors = [0xff4444, 0x44ff44, 0x4444ff, 0xffff44, 0xff44ff, 0x44ffff];\n    \n    colors.forEach((color, index) => {\n      // Create confetti texture\n      const graphics = this.scene.add.graphics();\n      graphics.fillStyle(color);\n      graphics.fillRect(0, 0, 8, 8);\n      graphics.generateTexture(`confetti_${index}`, 8, 8);\n      graphics.destroy();\n      \n      // Create confetti emitter\n      const emitter = this.scene.add.particles(\n        this.scene.scale.width / 2,\n        -50,\n        `confetti_${index}`,\n        {\n          x: { min: 0, max: this.scene.scale.width },\n          y: -50,\n          speedY: { min: 100, max: 300 },\n          speedX: { min: -100, max: 100 },\n          scale: { start: 0.8, end: 0.2 },\n          rotation: { start: 0, end: 360 },\n          lifespan: 3000,\n          frequency: 50\n        }\n      );\n      \n      this.particles.push(emitter);\n      \n      // Stop and clean up after 2 seconds\n      this.scene.time.delayedCall(2000, () => {\n        emitter.stop();\n        this.scene.time.delayedCall(3000, () => {\n          emitter.destroy();\n          this.scene.textures.remove(`confetti_${index}`);\n          const particleIndex = this.particles.indexOf(emitter);\n          if (particleIndex > -1) this.particles.splice(particleIndex, 1);\n        });\n      });\n    });\n  }\n  \n  private createVictoryText(): void {\n    const text = this.scene.add.text(\n      this.scene.scale.width / 2,\n      this.scene.scale.height / 2,\n      'LEVEL COMPLETE!',\n      {\n        fontSize: '48px',\n        fontFamily: 'Arial, sans-serif',\n        color: '#ffd700',\n        stroke: '#000000',\n        strokeThickness: 4,\n        fontStyle: 'bold'\n      }\n    ).setOrigin(0.5);\n    \n    text.setScale(0);\n    \n    const tween = this.scene.tweens.add({\n      targets: text,\n      scaleX: 1,\n      scaleY: 1,\n      duration: 500,\n      ease: 'Back.easeOut',\n      onComplete: () => {\n        // Keep text visible, will be cleaned up when scene changes\n        const index = this.tweens.indexOf(tween);\n        if (index > -1) this.tweens.splice(index, 1);\n      }\n    });\n    \n    this.tweens.push(tween);\n    \n    // Add pulsing effect\n    const pulseTween = this.scene.tweens.add({\n      targets: text,\n      scaleX: 1.1,\n      scaleY: 1.1,\n      duration: 1000,\n      yoyo: true,\n      repeat: -1,\n      ease: 'Sine.easeInOut'\n    });\n    \n    this.tweens.push(pulseTween);\n  }\n  \n  private createFireworks(): void {\n    const fireworkCount = 5;\n    \n    for (let i = 0; i < fireworkCount; i++) {\n      this.scene.time.delayedCall(i * 400, () => {\n        const x = Math.random() * this.scene.scale.width;\n        const y = Math.random() * this.scene.scale.height * 0.6;\n        \n        this.createSingleFirework(x, y);\n      });\n    }\n  }\n  \n  private createSingleFirework(x: number, y: number): void {\n    const colors = [0xff4444, 0x44ff44, 0x4444ff, 0xffff44, 0xff44ff];\n    const color = colors[Math.floor(Math.random() * colors.length)];\n    \n    // Create firework texture\n    const graphics = this.scene.add.graphics();\n    graphics.fillStyle(color);\n    graphics.fillCircle(2, 2, 2);\n    graphics.generateTexture('firework_' + Date.now(), 4, 4);\n    const textureKey = 'firework_' + Date.now();\n    graphics.destroy();\n    \n    const emitter = this.scene.add.particles(x, y, textureKey, {\n      speed: { min: 150, max: 300 },\n      scale: { start: 1, end: 0 },\n      lifespan: 1000,\n      quantity: 20,\n      frequency: -1,\n      blendMode: 'ADD'\n    });\n    \n    this.scene.time.delayedCall(1200, () => {\n      emitter.destroy();\n      this.scene.textures.remove(textureKey);\n    });\n  }\n  \n  /**\n   * Create power-up activation effect\n   */\n  public animatePowerUpActivation(type: string): void {\n    switch (type) {\n      case 'speed':\n        this.createSpeedBoostEffect();\n        break;\n      case 'invincible':\n        this.createInvincibilityEffect();\n        break;\n      case 'shrink':\n        this.createShrinkEffect();\n        break;\n      case 'multi':\n        this.createMultiFoodEffect();\n        break;\n      default:\n        this.createGenericPowerUpEffect();\n    }\n  }\n  \n  private createSpeedBoostEffect(): void {\n    const lines = [];\n    \n    for (let i = 0; i < 10; i++) {\n      const line = this.scene.add.graphics();\n      line.lineStyle(3, 0x00ffff, 0.8);\n      line.lineBetween(0, 0, 50, 0);\n      \n      const x = Math.random() * this.scene.scale.width;\n      const y = Math.random() * this.scene.scale.height;\n      const angle = Math.random() * Math.PI * 2;\n      \n      line.setPosition(x, y);\n      line.setRotation(angle);\n      \n      lines.push(line);\n      \n      const tween = this.scene.tweens.add({\n        targets: line,\n        x: x + Math.cos(angle) * 200,\n        y: y + Math.sin(angle) * 200,\n        alpha: 0,\n        duration: 800,\n        ease: 'Quad.easeOut',\n        onComplete: () => {\n          line.destroy();\n          const index = this.tweens.indexOf(tween);\n          if (index > -1) this.tweens.splice(index, 1);\n        }\n      });\n      \n      this.tweens.push(tween);\n    }\n  }\n  \n  private createInvincibilityEffect(): void {\n    const shield = this.scene.add.graphics();\n    shield.lineStyle(4, 0xffff00, 0.7);\n    shield.strokeCircle(this.scene.scale.width / 2, this.scene.scale.height / 2, 100);\n    \n    const tween = this.scene.tweens.add({\n      targets: shield,\n      scaleX: 3,\n      scaleY: 3,\n      alpha: 0,\n      duration: 1000,\n      ease: 'Quad.easeOut',\n      onComplete: () => {\n        shield.destroy();\n        const index = this.tweens.indexOf(tween);\n        if (index > -1) this.tweens.splice(index, 1);\n      }\n    });\n    \n    this.tweens.push(tween);\n  }\n  \n  private createShrinkEffect(): void {\n    const circles = [];\n    \n    for (let i = 0; i < 5; i++) {\n      const circle = this.scene.add.circle(\n        this.scene.scale.width / 2,\n        this.scene.scale.height / 2,\n        50 + i * 20,\n        0xff00ff,\n        0.3 - i * 0.05\n      );\n      \n      circles.push(circle);\n      \n      const tween = this.scene.tweens.add({\n        targets: circle,\n        scaleX: 0,\n        scaleY: 0,\n        duration: 600 + i * 100,\n        ease: 'Back.easeIn',\n        onComplete: () => {\n          circle.destroy();\n          const index = this.tweens.indexOf(tween);\n          if (index > -1) this.tweens.splice(index, 1);\n        }\n      });\n      \n      this.tweens.push(tween);\n    }\n  }\n  \n  private createMultiFoodEffect(): void {\n    const centerX = this.scene.scale.width / 2;\n    const centerY = this.scene.scale.height / 2;\n    \n    for (let i = 0; i < 8; i++) {\n      const angle = (i / 8) * Math.PI * 2;\n      const startX = centerX;\n      const startY = centerY;\n      const endX = centerX + Math.cos(angle) * 150;\n      const endY = centerY + Math.sin(angle) * 150;\n      \n      const orb = this.scene.add.circle(startX, startY, 8, 0x00ff00, 0.8);\n      \n      const tween = this.scene.tweens.add({\n        targets: orb,\n        x: endX,\n        y: endY,\n        alpha: 0,\n        duration: 800,\n        ease: 'Quad.easeOut',\n        onComplete: () => {\n          orb.destroy();\n          const index = this.tweens.indexOf(tween);\n          if (index > -1) this.tweens.splice(index, 1);\n        }\n      });\n      \n      this.tweens.push(tween);\n    }\n  }\n  \n  private createGenericPowerUpEffect(): void {\n    const star = this.scene.add.star(\n      this.scene.scale.width / 2,\n      this.scene.scale.height / 2,\n      5, 20, 40,\n      0xffd700\n    );\n    \n    star.setScale(0);\n    \n    const tween = this.scene.tweens.add({\n      targets: star,\n      scaleX: 2,\n      scaleY: 2,\n      alpha: 0,\n      rotation: Math.PI * 2,\n      duration: 1000,\n      ease: 'Quad.easeOut',\n      onComplete: () => {\n        star.destroy();\n        const index = this.tweens.indexOf(tween);\n        if (index > -1) this.tweens.splice(index, 1);\n      }\n    });\n    \n    this.tweens.push(tween);\n  }\n  \n  /**\n   * Screen shake effect\n   */\n  public shakeScreen(intensity: number = 10, duration: number = 300): void {\n    const camera = this.scene.cameras.main;\n    camera.shake(duration, intensity);\n  }\n  \n  /**\n   * Flash screen effect\n   */\n  public flashScreen(color: number = 0xffffff, alpha: number = 0.5, duration: number = 200): void {\n    const flash = this.scene.add.rectangle(\n      this.scene.scale.width / 2,\n      this.scene.scale.height / 2,\n      this.scene.scale.width,\n      this.scene.scale.height,\n      color,\n      alpha\n    );\n    \n    flash.setDepth(1000); // Ensure it's on top\n    \n    const tween = this.scene.tweens.add({\n      targets: flash,\n      alpha: 0,\n      duration: duration,\n      ease: 'Quad.easeOut',\n      onComplete: () => {\n        flash.destroy();\n        const index = this.tweens.indexOf(tween);\n        if (index > -1) this.tweens.splice(index, 1);\n      }\n    });\n    \n    this.tweens.push(tween);\n  }\n  \n  /**\n   * Cleanup all animations and particles\n   */\n  public cleanup(): void {\n    // Stop all tweens\n    this.tweens.forEach(tween => {\n      if (tween && tween.isActive()) {\n        tween.stop();\n      }\n    });\n    this.tweens = [];\n    \n    // Destroy all particle emitters\n    this.particles.forEach(emitter => {\n      if (emitter && emitter.active) {\n        emitter.destroy();\n      }\n    });\n    this.particles = [];\n  }\n  \n  // Helper methods\n  private getFoodScore(foodType: string): number {\n    const scores: Record<string, number> = {\n      apple: 10,\n      golden: 50,\n      speed: 20,\n      shrink: 30,\n      multi: 25,\n      power: 100,\n      mystery: 75,\n      coin: 0\n    };\n    return scores[foodType] || 10;\n  }\n  \n  private getFoodColor(foodType: string): number {\n    const colors: Record<string, number> = {\n      apple: 0xff4444,\n      golden: 0xffd700,\n      speed: 0x00ffff,\n      shrink: 0xff00ff,\n      multi: 0x00ff00,\n      power: 0xffff00,\n      mystery: 0x8000ff,\n      coin: 0xffa500\n    };\n    return colors[foodType] || 0xff4444;\n  }\n}
+  constructor(scene: Phaser.Scene) {
+    this.scene = scene;
+  }
+  
+  /**
+   * Create food consumption animation
+   */
+  public animateFoodConsumption(x: number, y: number, foodType: string): void {
+    const tileSize = 20;
+    const worldX = x * tileSize + tileSize / 2;
+    const worldY = y * tileSize + tileSize / 2;
+    
+    // Create particle burst
+    this.createFoodParticles(worldX, worldY, foodType);
+    
+    // Create score popup
+    this.createScorePopup(worldX, worldY, this.getFoodScore(foodType));
+    
+    // Create ripple effect
+    this.createRippleEffect(worldX, worldY, this.getFoodColor(foodType));
+  }
+  
+  private createFoodParticles(x: number, y: number, foodType: string): void {
+    const config = this.getFoodParticleConfig(foodType);
+    
+    // Create temporary graphics for particle texture
+    const graphics = this.scene.add.graphics();
+    graphics.fillStyle(config.color);
+    graphics.fillRect(0, 0, 4, 4);
+    graphics.generateTexture('particle_' + foodType, 4, 4);
+    graphics.destroy();
+    
+    // Create particle emitter
+    const emitter = this.scene.add.particles(x, y, 'particle_' + foodType, {
+      speed: { min: 50, max: 150 },
+      scale: { start: 0.8, end: 0 },
+      lifespan: config.lifespan,
+      quantity: config.quantity,
+      frequency: -1, // Explode once
+      blendMode: config.blendMode || 'NORMAL'
+    });
+    
+    // Auto-destroy after animation
+    this.scene.time.delayedCall(config.lifespan + 100, () => {
+      emitter.destroy();
+      this.scene.textures.remove('particle_' + foodType);
+    });
+  }
+  
+  private getFoodParticleConfig(foodType: string): any {
+    const configs: Record<string, any> = {
+      apple: {
+        color: 0xff4444,
+        quantity: 8,
+        lifespan: 600,
+        blendMode: 'NORMAL'
+      },
+      golden: {
+        color: 0xffd700,
+        quantity: 12,
+        lifespan: 800,
+        blendMode: 'ADD'
+      },
+      speed: {
+        color: 0x00ffff,
+        quantity: 10,
+        lifespan: 700,
+        blendMode: 'ADD'
+      },
+      power: {
+        color: 0xffff00,
+        quantity: 15,
+        lifespan: 1000,
+        blendMode: 'ADD'
+      },
+      multi: {
+        color: 0x00ff00,
+        quantity: 20,
+        lifespan: 900,
+        blendMode: 'NORMAL'
+      },
+      bomb: {
+        color: 0xff0000,
+        quantity: 25,
+        lifespan: 1200,
+        blendMode: 'ADD'
+      }
+    };
+    
+    return configs[foodType] || configs.apple;
+  }
+  
+  private createScorePopup(x: number, y: number, score: number): void {
+    const text = this.scene.add.text(x, y, `+${score}`, {
+      fontSize: '16px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 2,
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    
+    // Animate popup
+    const tween = this.scene.tweens.add({
+      targets: text,
+      y: y - 50,
+      alpha: 0,
+      scale: 1.5,
+      duration: 1000,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        text.destroy();
+        const index = this.tweens.indexOf(tween);
+        if (index > -1) this.tweens.splice(index, 1);
+      }
+    });
+    
+    this.tweens.push(tween);
+  }
+  
+  private createRippleEffect(x: number, y: number, color: number): void {
+    const graphics = this.scene.add.graphics();
+    graphics.lineStyle(3, color, 0.8);
+    graphics.strokeCircle(x, y, 5);
+    
+    const tween = this.scene.tweens.add({
+      targets: graphics,
+      scaleX: 4,
+      scaleY: 4,
+      alpha: 0,
+      duration: 400,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        graphics.destroy();
+        const index = this.tweens.indexOf(tween);
+        if (index > -1) this.tweens.splice(index, 1);
+      }
+    });
+    
+    this.tweens.push(tween);
+  }
+  
+  /**
+   * Animate snake growth
+   */
+  public animateSnakeGrowth(segments: { x: number, y: number }[]): void {
+    if (segments.length === 0) return;
+    
+    const lastSegment = segments[segments.length - 1];
+    const tileSize = 20;
+    const worldX = lastSegment.x * tileSize;
+    const worldY = lastSegment.y * tileSize;
+    
+    // Create temporary segment that scales in
+    const tempSegment = this.scene.add.rectangle(
+      worldX + tileSize / 2,
+      worldY + tileSize / 2,
+      tileSize,
+      tileSize,
+      0x66cc66
+    );
+    
+    tempSegment.setScale(0);
+    
+    const tween = this.scene.tweens.add({
+      targets: tempSegment,
+      scaleX: 1,
+      scaleY: 1,
+      duration: 200,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        tempSegment.destroy();
+        const index = this.tweens.indexOf(tween);
+        if (index > -1) this.tweens.splice(index, 1);
+      }
+    });
+    
+    this.tweens.push(tween);
+  }
+  
+  /**
+   * Create death animation
+   */
+  public animateGameOver(snakeSegments: { x: number, y: number }[]): void {
+    const tileSize = 20;
+    
+    // Create explosion at head
+    if (snakeSegments.length > 0) {
+      const head = snakeSegments[0];
+      const headX = head.x * tileSize + tileSize / 2;
+      const headY = head.y * tileSize + tileSize / 2;
+      
+      this.createExplosion(headX, headY);
+    }
+    
+    // Animate segments disappearing
+    snakeSegments.forEach((segment, index) => {
+      const segmentX = segment.x * tileSize + tileSize / 2;
+      const segmentY = segment.y * tileSize + tileSize / 2;
+      
+      this.scene.time.delayedCall(index * 50, () => {
+        this.createSegmentDisappear(segmentX, segmentY);
+      });
+    });
+  }
+  
+  private createExplosion(x: number, y: number): void {
+    // Create explosion texture
+    const graphics = this.scene.add.graphics();
+    graphics.fillStyle(0xff4444);
+    graphics.fillRect(0, 0, 6, 6);
+    graphics.generateTexture('explosion_particle', 6, 6);
+    graphics.destroy();
+    
+    const emitter = this.scene.add.particles(x, y, 'explosion_particle', {
+      speed: { min: 100, max: 300 },
+      scale: { start: 1, end: 0 },
+      lifespan: 800,
+      quantity: 30,
+      frequency: -1,
+      blendMode: 'ADD'
+    });
+    
+    this.scene.time.delayedCall(1000, () => {
+      emitter.destroy();
+      this.scene.textures.remove('explosion_particle');
+    });
+  }
+  
+  private createSegmentDisappear(x: number, y: number): void {
+    const segment = this.scene.add.rectangle(x, y, 20, 20, 0x66cc66);
+    
+    const tween = this.scene.tweens.add({
+      targets: segment,
+      scaleX: 0,
+      scaleY: 0,
+      alpha: 0,
+      rotation: Math.PI,
+      duration: 300,
+      ease: 'Back.easeIn',
+      onComplete: () => {
+        segment.destroy();
+        const index = this.tweens.indexOf(tween);
+        if (index > -1) this.tweens.splice(index, 1);
+      }
+    });
+    
+    this.tweens.push(tween);
+  }
+  
+  /**
+   * Create level complete celebration
+   */
+  public animateLevelComplete(): void {
+    this.createConfettiExplosion();
+    this.createVictoryText();
+    this.createFireworks();
+  }
+  
+  private createConfettiExplosion(): void {
+    const colors = [0xff4444, 0x44ff44, 0x4444ff, 0xffff44, 0xff44ff, 0x44ffff];
+    
+    colors.forEach((color, index) => {
+      // Create confetti texture
+      const graphics = this.scene.add.graphics();
+      graphics.fillStyle(color);
+      graphics.fillRect(0, 0, 8, 8);
+      graphics.generateTexture(`confetti_${index}`, 8, 8);
+      graphics.destroy();
+      
+      // Create confetti emitter
+      const emitter = this.scene.add.particles(
+        this.scene.scale.width / 2,
+        -50,
+        `confetti_${index}`,
+        {
+          x: { min: 0, max: this.scene.scale.width },
+          y: -50,
+          speedY: { min: 100, max: 300 },
+          speedX: { min: -100, max: 100 },
+          scale: { start: 0.8, end: 0.2 },
+          rotation: { start: 0, end: 360 },
+          lifespan: 3000,
+          frequency: 50
+        }
+      );
+      
+      this.particles.push(emitter);
+      
+      // Stop and clean up after 2 seconds
+      this.scene.time.delayedCall(2000, () => {
+        emitter.stop();
+        this.scene.time.delayedCall(3000, () => {
+          emitter.destroy();
+          this.scene.textures.remove(`confetti_${index}`);
+          const particleIndex = this.particles.indexOf(emitter);
+          if (particleIndex > -1) this.particles.splice(particleIndex, 1);
+        });
+      });
+    });
+  }
+  
+  private createVictoryText(): void {
+    const text = this.scene.add.text(
+      this.scene.scale.width / 2,
+      this.scene.scale.height / 2,
+      'LEVEL COMPLETE!',
+      {
+        fontSize: '48px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#ffd700',
+        stroke: '#000000',
+        strokeThickness: 4,
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5);
+    
+    text.setScale(0);
+    
+    const tween = this.scene.tweens.add({
+      targets: text,
+      scaleX: 1,
+      scaleY: 1,
+      duration: 500,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        // Keep text visible, will be cleaned up when scene changes
+        const index = this.tweens.indexOf(tween);
+        if (index > -1) this.tweens.splice(index, 1);
+      }
+    });
+    
+    this.tweens.push(tween);
+    
+    // Add pulsing effect
+    const pulseTween = this.scene.tweens.add({
+      targets: text,
+      scaleX: 1.1,
+      scaleY: 1.1,
+      duration: 1000,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+    
+    this.tweens.push(pulseTween);
+  }
+  
+  private createFireworks(): void {
+    const fireworkCount = 5;
+    
+    for (let i = 0; i < fireworkCount; i++) {
+      this.scene.time.delayedCall(i * 400, () => {
+        const x = Math.random() * this.scene.scale.width;
+        const y = Math.random() * this.scene.scale.height * 0.6;
+        
+        this.createSingleFirework(x, y);
+      });
+    }
+  }
+  
+  private createSingleFirework(x: number, y: number): void {
+    const colors = [0xff4444, 0x44ff44, 0x4444ff, 0xffff44, 0xff44ff];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    
+    // Create firework texture
+    const graphics = this.scene.add.graphics();
+    graphics.fillStyle(color);
+    graphics.fillCircle(2, 2, 2);
+    graphics.generateTexture('firework_' + Date.now(), 4, 4);
+    const textureKey = 'firework_' + Date.now();
+    graphics.destroy();
+    
+    const emitter = this.scene.add.particles(x, y, textureKey, {
+      speed: { min: 150, max: 300 },
+      scale: { start: 1, end: 0 },
+      lifespan: 1000,
+      quantity: 20,
+      frequency: -1,
+      blendMode: 'ADD'
+    });
+    
+    this.scene.time.delayedCall(1200, () => {
+      emitter.destroy();
+      this.scene.textures.remove(textureKey);
+    });
+  }
+  
+  /**
+   * Create power-up activation effect
+   */
+  public animatePowerUpActivation(type: string): void {
+    switch (type) {
+      case 'speed':
+        this.createSpeedBoostEffect();
+        break;
+      case 'invincible':
+        this.createInvincibilityEffect();
+        break;
+      case 'shrink':
+        this.createShrinkEffect();
+        break;
+      case 'multi':
+        this.createMultiFoodEffect();
+        break;
+      default:
+        this.createGenericPowerUpEffect();
+    }
+  }
+  
+  private createSpeedBoostEffect(): void {
+    const lines = [];
+    
+    for (let i = 0; i < 10; i++) {
+      const line = this.scene.add.graphics();
+      line.lineStyle(3, 0x00ffff, 0.8);
+      line.lineBetween(0, 0, 50, 0);
+      
+      const x = Math.random() * this.scene.scale.width;
+      const y = Math.random() * this.scene.scale.height;
+      const angle = Math.random() * Math.PI * 2;
+      
+      line.setPosition(x, y);
+      line.setRotation(angle);
+      
+      lines.push(line);
+      
+      const tween = this.scene.tweens.add({
+        targets: line,
+        x: x + Math.cos(angle) * 200,
+        y: y + Math.sin(angle) * 200,
+        alpha: 0,
+        duration: 800,
+        ease: 'Quad.easeOut',
+        onComplete: () => {
+          line.destroy();
+          const index = this.tweens.indexOf(tween);
+          if (index > -1) this.tweens.splice(index, 1);
+        }
+      });
+      
+      this.tweens.push(tween);
+    }
+  }
+  
+  private createInvincibilityEffect(): void {
+    const shield = this.scene.add.graphics();
+    shield.lineStyle(4, 0xffff00, 0.7);
+    shield.strokeCircle(this.scene.scale.width / 2, this.scene.scale.height / 2, 100);
+    
+    const tween = this.scene.tweens.add({
+      targets: shield,
+      scaleX: 3,
+      scaleY: 3,
+      alpha: 0,
+      duration: 1000,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        shield.destroy();
+        const index = this.tweens.indexOf(tween);
+        if (index > -1) this.tweens.splice(index, 1);
+      }
+    });
+    
+    this.tweens.push(tween);
+  }
+  
+  private createShrinkEffect(): void {
+    const circles = [];
+    
+    for (let i = 0; i < 5; i++) {
+      const circle = this.scene.add.circle(
+        this.scene.scale.width / 2,
+        this.scene.scale.height / 2,
+        50 + i * 20,
+        0xff00ff,
+        0.3 - i * 0.05
+      );
+      
+      circles.push(circle);
+      
+      const tween = this.scene.tweens.add({
+        targets: circle,
+        scaleX: 0,
+        scaleY: 0,
+        duration: 600 + i * 100,
+        ease: 'Back.easeIn',
+        onComplete: () => {
+          circle.destroy();
+          const index = this.tweens.indexOf(tween);
+          if (index > -1) this.tweens.splice(index, 1);
+        }
+      });
+      
+      this.tweens.push(tween);
+    }
+  }
+  
+  private createMultiFoodEffect(): void {
+    const centerX = this.scene.scale.width / 2;
+    const centerY = this.scene.scale.height / 2;
+    
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const startX = centerX;
+      const startY = centerY;
+      const endX = centerX + Math.cos(angle) * 150;
+      const endY = centerY + Math.sin(angle) * 150;
+      
+      const orb = this.scene.add.circle(startX, startY, 8, 0x00ff00, 0.8);
+      
+      const tween = this.scene.tweens.add({
+        targets: orb,
+        x: endX,
+        y: endY,
+        alpha: 0,
+        duration: 800,
+        ease: 'Quad.easeOut',
+        onComplete: () => {
+          orb.destroy();
+          const index = this.tweens.indexOf(tween);
+          if (index > -1) this.tweens.splice(index, 1);
+        }
+      });
+      
+      this.tweens.push(tween);
+    }
+  }
+  
+  private createGenericPowerUpEffect(): void {
+    const star = this.scene.add.star(
+      this.scene.scale.width / 2,
+      this.scene.scale.height / 2,
+      5, 20, 40,
+      0xffd700
+    );
+    
+    star.setScale(0);
+    
+    const tween = this.scene.tweens.add({
+      targets: star,
+      scaleX: 2,
+      scaleY: 2,
+      alpha: 0,
+      rotation: Math.PI * 2,
+      duration: 1000,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        star.destroy();
+        const index = this.tweens.indexOf(tween);
+        if (index > -1) this.tweens.splice(index, 1);
+      }
+    });
+    
+    this.tweens.push(tween);
+  }
+  
+  /**
+   * Screen shake effect
+   */
+  public shakeScreen(intensity: number = 10, duration: number = 300): void {
+    const camera = this.scene.cameras.main;
+    camera.shake(duration, intensity);
+  }
+  
+  /**
+   * Flash screen effect
+   */
+  public flashScreen(color: number = 0xffffff, alpha: number = 0.5, duration: number = 200): void {
+    const flash = this.scene.add.rectangle(
+      this.scene.scale.width / 2,
+      this.scene.scale.height / 2,
+      this.scene.scale.width,
+      this.scene.scale.height,
+      color,
+      alpha
+    );
+    
+    flash.setDepth(1000); // Ensure it's on top
+    
+    const tween = this.scene.tweens.add({
+      targets: flash,
+      alpha: 0,
+      duration: duration,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        flash.destroy();
+        const index = this.tweens.indexOf(tween);
+        if (index > -1) this.tweens.splice(index, 1);
+      }
+    });
+    
+    this.tweens.push(tween);
+  }
+  
+  /**
+   * Cleanup all animations and particles
+   */
+  public cleanup(): void {
+    // Stop all tweens
+    this.tweens.forEach(tween => {
+      if (tween && tween.isActive()) {
+        tween.stop();
+      }
+    });
+    this.tweens = [];
+    
+    // Destroy all particle emitters
+    this.particles.forEach(emitter => {
+      if (emitter && emitter.active) {
+        emitter.destroy();
+      }
+    });
+    this.particles = [];
+  }
+  
+  // Helper methods
+  private getFoodScore(foodType: string): number {
+    const scores: Record<string, number> = {
+      apple: 10,
+      golden: 50,
+      speed: 20,
+      shrink: 30,
+      multi: 25,
+      power: 100,
+      mystery: 75,
+      coin: 0
+    };
+    return scores[foodType] || 10;
+  }
+  
+  private getFoodColor(foodType: string): number {
+    const colors: Record<string, number> = {
+      apple: 0xff4444,
+      golden: 0xffd700,
+      speed: 0x00ffff,
+      shrink: 0xff00ff,
+      multi: 0x00ff00,
+      power: 0xffff00,
+      mystery: 0x8000ff,
+      coin: 0xffa500
+    };
+    return colors[foodType] || 0xff4444;
+  }
+}

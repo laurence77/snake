@@ -4,7 +4,6 @@ import { MenuScene } from "./scenes/MenuScene";
 import { StoreScene } from "./scenes/StoreScene";
 import { LevelSystem } from "./systems/LevelSystem";
 import { FoodSystem } from "./systems/FoodSystem";
-import { StoreSystem } from "./systems/StoreSystem";
 import { SoundManager } from "./systems/SoundManager";
 import { AnimationManager } from "./systems/AnimationManager";
 import { GameState, Level, FoodType, Position, SnakeSegment, Obstacle, FoodEffect } from "./types/GameTypes";
@@ -20,7 +19,6 @@ class UltimateSnakeScene extends Phaser.Scene {
   // Core game systems
   private levelSystem!: LevelSystem;
   private foodSystem!: FoodSystem;
-  private storeSystem!: StoreSystem;
   private soundManager!: SoundManager;
   private animationManager!: AnimationManager;
   
@@ -78,7 +76,6 @@ class UltimateSnakeScene extends Phaser.Scene {
   private initializeSystems(): void {
     this.levelSystem = new LevelSystem();
     this.foodSystem = new FoodSystem();
-    this.storeSystem = new StoreSystem();
     this.soundManager = new SoundManager(this);
     this.animationManager = new AnimationManager(this);
   }
@@ -163,4 +160,1088 @@ class UltimateSnakeScene extends Phaser.Scene {
     }
   }
   
-  private createForestDecorations(): void {\n    // Add subtle forest elements\n    for (let i = 0; i < 10; i++) {\n      const x = Math.random() * WIDTH;\n      const y = Math.random() * HEIGHT;\n      this.backgroundGraphics.fillStyle(0x0d4f1c, 0.3);\n      this.backgroundGraphics.fillCircle(x, y, Math.random() * 15 + 5);\n    }\n  }\n  \n  private createDesertDecorations(): void {\n    // Add sand dune patterns\n    for (let i = 0; i < 5; i++) {\n      const x = Math.random() * WIDTH;\n      const y = HEIGHT - Math.random() * 100;\n      this.backgroundGraphics.fillStyle(0x8b4513, 0.2);\n      this.backgroundGraphics.fillEllipse(x, y, 100, 30);\n    }\n  }\n  \n  private createSpaceDecorations(): void {\n    // Add stars\n    for (let i = 0; i < 50; i++) {\n      const x = Math.random() * WIDTH;\n      const y = Math.random() * HEIGHT;\n      this.backgroundGraphics.fillStyle(0xffffff, Math.random() * 0.8 + 0.2);\n      this.backgroundGraphics.fillCircle(x, y, 1);\n    }\n  }\n  \n  private createCyberDecorations(): void {\n    // Add grid lines\n    this.backgroundGraphics.lineStyle(1, 0x00ff00, 0.3);\n    for (let x = 0; x < WIDTH; x += 40) {\n      this.backgroundGraphics.lineBetween(x, 0, x, HEIGHT);\n    }\n    for (let y = 0; y < HEIGHT; y += 40) {\n      this.backgroundGraphics.lineBetween(0, y, WIDTH, y);\n    }\n  }\n  \n  private createUI(): void {\n    // Score display\n    this.scoreText = this.add.text(10, 10, `Score: ${this.score}`, {\n      fontSize: '18px',\n      fontFamily: 'Arial, sans-serif',\n      color: '#ffffff',\n      backgroundColor: '#000000',\n      padding: { x: 8, y: 4 }\n    });\n    \n    // Lives display\n    this.livesText = this.add.text(10, 40, `Lives: ${this.lives}`, {\n      fontSize: '16px',\n      fontFamily: 'Arial, sans-serif',\n      color: '#ff4444',\n      backgroundColor: '#000000',\n      padding: { x: 8, y: 4 }\n    });\n    \n    // Level display\n    this.levelText = this.add.text(WIDTH - 10, 10, `Level: ${this.levelNumber}`, {\n      fontSize: '16px',\n      fontFamily: 'Arial, sans-serif',\n      color: '#00ff00',\n      backgroundColor: '#000000',\n      padding: { x: 8, y: 4 }\n    }).setOrigin(1, 0);\n    \n    // Coins display\n    this.coinsText = this.add.text(WIDTH - 10, 40, `Coins: ${this.coins}`, {\n      fontSize: '16px',\n      fontFamily: 'Arial, sans-serif',\n      color: '#ffd700',\n      backgroundColor: '#000000',\n      padding: { x: 8, y: 4 }\n    }).setOrigin(1, 0);\n    \n    // Active effects container\n    this.effectsContainer = this.add.container(10, 70);\n    \n    // Add target score if level has one\n    if (this.currentLevel.targetScore) {\n      this.add.text(WIDTH / 2, 10, `Target: ${this.currentLevel.targetScore}`, {\n        fontSize: '16px',\n        fontFamily: 'Arial, sans-serif',\n        color: '#ffff00',\n        backgroundColor: '#000000',\n        padding: { x: 8, y: 4 }\n      }).setOrigin(0.5, 0);\n    }\n  }\n  \n  private setupInput(): void {\n    // Keyboard input\n    this.input.keyboard.on('keydown', (event: KeyboardEvent) => {\n      this.handleKeyInput(event.key);\n    });\n    \n    // Touch/swipe input for mobile\n    this.input.on('pointerdown', this.handleTouchStart, this);\n    this.input.on('pointerup', this.handleTouchEnd, this);\n    \n    // Pause functionality\n    this.input.keyboard.on('keydown-ESC', () => {\n      this.togglePause();\n    });\n  }\n  \n  private handleKeyInput(key: string): void {\n    if (this.gameOver || this.paused) return;\n    \n    switch (key) {\n      case 'ArrowUp':\n      case 'w':\n      case 'W':\n        if (this.dir.y === 0) this.nextDir = { x: 0, y: -1 };\n        break;\n      case 'ArrowDown':\n      case 's':\n      case 'S':\n        if (this.dir.y === 0) this.nextDir = { x: 0, y: 1 };\n        break;\n      case 'ArrowLeft':\n      case 'a':\n      case 'A':\n        if (this.dir.x === 0) this.nextDir = { x: -1, y: 0 };\n        break;\n      case 'ArrowRight':\n      case 'd':\n      case 'D':\n        if (this.dir.x === 0) this.nextDir = { x: 1, y: 0 };\n        break;\n    }\n  }\n  \n  private handleTouchStart(pointer: Phaser.Input.Pointer): void {\n    if (this.gameOver || this.paused) return;\n    this.touchStartPos = { x: pointer.x, y: pointer.y };\n  }\n  \n  private touchStartPos?: Position;\n  \n  private handleTouchEnd(pointer: Phaser.Input.Pointer): void {\n    if (!this.touchStartPos || this.gameOver || this.paused) return;\n    \n    const deltaX = pointer.x - this.touchStartPos.x;\n    const deltaY = pointer.y - this.touchStartPos.y;\n    const minSwipeDistance = 30;\n    \n    if (Math.abs(deltaX) > minSwipeDistance || Math.abs(deltaY) > minSwipeDistance) {\n      if (Math.abs(deltaX) > Math.abs(deltaY)) {\n        // Horizontal swipe\n        if (deltaX > 0 && this.dir.x === 0) {\n          this.nextDir = { x: 1, y: 0 }; // Right\n        } else if (deltaX < 0 && this.dir.x === 0) {\n          this.nextDir = { x: -1, y: 0 }; // Left\n        }\n      } else {\n        // Vertical swipe\n        if (deltaY > 0 && this.dir.y === 0) {\n          this.nextDir = { x: 0, y: 1 }; // Down\n        } else if (deltaY < 0 && this.dir.y === 0) {\n          this.nextDir = { x: 0, y: -1 }; // Up\n        }\n      }\n    }\n    \n    this.touchStartPos = undefined;\n  }\n  \n  private createVisualElements(): void {\n    this.graphics = this.add.graphics();\n  }\n  \n  private showLevelIntro(): void {\n    const introText = this.add.text(\n      WIDTH / 2,\n      HEIGHT / 2,\n      `${this.currentLevel.name}\\nDifficulty: ${'★'.repeat(this.currentLevel.difficulty)}`,\n      {\n        fontSize: '32px',\n        fontFamily: 'Arial, sans-serif',\n        color: '#ffffff',\n        stroke: '#000000',\n        strokeThickness: 3,\n        align: 'center',\n        fontStyle: 'bold'\n      }\n    ).setOrigin(0.5);\n    \n    this.tweens.add({\n      targets: introText,\n      alpha: 0,\n      duration: 3000,\n      ease: 'Quad.easeOut',\n      onComplete: () => introText.destroy()\n    });\n    \n    // Show special rules if any\n    if (this.currentLevel.specialRules && this.currentLevel.specialRules.length > 0) {\n      const rulesText = this.add.text(\n        WIDTH / 2,\n        HEIGHT / 2 + 80,\n        `Special Rule: ${this.formatSpecialRule(this.currentLevel.specialRules[0])}`,\n        {\n          fontSize: '18px',\n          fontFamily: 'Arial, sans-serif',\n          color: '#ffff00',\n          stroke: '#000000',\n          strokeThickness: 2,\n          align: 'center'\n        }\n      ).setOrigin(0.5);\n      \n      this.tweens.add({\n        targets: rulesText,\n        alpha: 0,\n        duration: 3000,\n        delay: 1000,\n        ease: 'Quad.easeOut',\n        onComplete: () => rulesText.destroy()\n      });\n    }\n  }\n  \n  private formatSpecialRule(rule: string): string {\n    const ruleNames: Record<string, string> = {\n      no_walls: 'Snake wraps around edges',\n      double_speed: 'Double speed mode',\n      invisible_tail: 'Invisible tail',\n      reverse_controls: 'Reversed controls',\n      shrinking_arena: 'Shrinking play area',\n      growing_tail: 'Continuous growth',\n      mirrored: 'Mirrored movement'\n    };\n    return ruleNames[rule] || rule;\n  }\n  \n  update(time: number, deltaTime: number): void {\n    if (this.gameOver || this.paused || this.levelCompleted) return;\n    \n    // Update active effects\n    this.updateActiveEffects(deltaTime);\n    \n    // Update food system\n    this.foodSystem.update(deltaTime);\n    \n    // Update movement\n    this.updateMovement(deltaTime);\n    \n    // Update obstacles\n    this.updateObstacles(deltaTime);\n    \n    // Check for food spawning\n    this.checkFoodSpawning();\n    \n    // Update UI\n    this.updateUI();\n    \n    // Draw everything\n    this.draw();\n  }\n  \n  private updateActiveEffects(deltaTime: number): void {\n    const effectsToRemove: string[] = [];\n    \n    this.activeEffects.forEach((effectData, effectId) => {\n      effectData.timeLeft -= deltaTime;\n      \n      if (effectData.timeLeft <= 0) {\n        this.removeEffect(effectId, effectData.effect);\n        effectsToRemove.push(effectId);\n      }\n    });\n    \n    effectsToRemove.forEach(id => this.activeEffects.delete(id));\n    \n    this.updateEffectsDisplay();\n  }\n  \n  private removeEffect(effectId: string, effect: FoodEffect): void {\n    switch (effect.type) {\n      case 'speed':\n        this.speedMultiplier = 1;\n        this.step = this.baseStep;\n        break;\n      case 'slow':\n        this.speedMultiplier = 1;\n        this.step = this.baseStep;\n        break;\n      case 'invincible':\n        this.invincible = false;\n        break;\n    }\n  }\n  \n  private updateEffectsDisplay(): void {\n    this.effectsContainer.removeAll(true);\n    \n    let yOffset = 0;\n    this.activeEffects.forEach((effectData, effectId) => {\n      const effectText = this.add.text(\n        0, yOffset,\n        `${this.getEffectName(effectData.effect.type)}: ${Math.ceil(effectData.timeLeft / 1000)}s`,\n        {\n          fontSize: '14px',\n          fontFamily: 'Arial, sans-serif',\n          color: this.getEffectColor(effectData.effect.type),\n          backgroundColor: '#000000',\n          padding: { x: 6, y: 2 }\n        }\n      );\n      \n      this.effectsContainer.add(effectText);\n      yOffset += 20;\n    });\n  }\n  \n  private getEffectName(type: string): string {\n    const names: Record<string, string> = {\n      speed: 'Speed Boost',\n      slow: 'Slowdown',\n      invincible: 'Invincible',\n      reverse: 'Reversed',\n      shrink: 'Shrinking',\n      multi: 'Multi Food'\n    };\n    return names[type] || type;\n  }\n  \n  private getEffectColor(type: string): string {\n    const colors: Record<string, string> = {\n      speed: '#00ffff',\n      slow: '#ff6600',\n      invincible: '#ffff00',\n      reverse: '#ff00ff',\n      shrink: '#ff0000',\n      multi: '#00ff00'\n    };\n    return colors[type] || '#ffffff';\n  }\n  \n  private updateMovement(deltaTime: number): void {\n    this.acc += deltaTime / 1000;\n    \n    const currentStep = this.step / this.speedMultiplier;\n    \n    if (this.acc < currentStep) return;\n    this.acc = 0;\n    \n    // Apply direction change\n    this.dir = { ...this.nextDir };\n    \n    // Move snake\n    const head = this.snake[0];\n    let newHead = {\n      x: head.x + this.dir.x,\n      y: head.y + this.dir.y\n    };\n    \n    // Handle special rules\n    if (this.currentLevel.specialRules?.includes('no_walls')) {\n      // Wrap around edges\n      if (newHead.x < 0) newHead.x = COLS - 1;\n      if (newHead.x >= COLS) newHead.x = 0;\n      if (newHead.y < 0) newHead.y = ROWS - 1;\n      if (newHead.y >= ROWS) newHead.y = 0;\n    } else {\n      // Normal wall collision\n      if (newHead.x < 0 || newHead.x >= COLS || newHead.y < 0 || newHead.y >= ROWS) {\n        this.handleCollision('wall');\n        return;\n      }\n    }\n    \n    // Check obstacle collision\n    if (this.checkObstacleCollision(newHead) && !this.invincible) {\n      this.handleCollision('obstacle');\n      return;\n    }\n    \n    // Check self collision\n    if (this.checkSelfCollision(newHead) && !this.invincible) {\n      this.handleCollision('self');\n      return;\n    }\n    \n    // Move snake\n    this.snake.unshift(newHead);\n    \n    // Check food collision\n    const foodAtPosition = this.foodSystem.getFoodAtPosition(newHead);\n    if (foodAtPosition) {\n      this.handleFoodCollision(foodAtPosition);\n    } else if (!this.shouldGrow()) {\n      this.snake.pop();\n    }\n    \n    // Play movement sound (very quiet)\n    if (Math.random() < 0.1) {\n      this.soundManager.playSound('snake_move', 0.1);\n    }\n  }\n  \n  private shouldGrow(): boolean {\n    // Check if snake should grow due to special rules\n    return this.currentLevel.specialRules?.includes('growing_tail') || false;\n  }\n  \n  private checkObstacleCollision(position: Position): boolean {\n    return this.obstacles.some(obstacle => {\n      return position.x >= obstacle.x &&\n             position.x < obstacle.x + obstacle.width &&\n             position.y >= obstacle.y &&\n             position.y < obstacle.y + obstacle.height &&\n             obstacle.active !== false;\n    });\n  }\n  \n  private checkSelfCollision(position: Position): boolean {\n    return this.snake.slice(1).some(segment => \n      segment.x === position.x && segment.y === position.y\n    );\n  }\n  \n  private updateObstacles(deltaTime: number): void {\n    this.obstacles.forEach(obstacle => {\n      if (obstacle.type === 'moving_wall' && obstacle.movePattern && obstacle.currentPatternIndex !== undefined) {\n        // Update moving obstacles\n        // This would need more sophisticated timing logic\n        // For now, we'll keep obstacles static\n      }\n    });\n  }\n  \n  private checkFoodSpawning(): void {\n    const currentFoodCount = this.foodSystem.getAllFoods().length;\n    const maxFoods = Math.min(5, Math.floor(this.currentLevel.foodConfig.spawnRate * 2));\n    \n    if (currentFoodCount < maxFoods && Math.random() < this.currentLevel.foodConfig.spawnRate * 0.01) {\n      this.spawnFood();\n    }\n  }\n  \n  private spawnFood(): void {\n    let attempts = 0;\n    const maxAttempts = 100;\n    \n    while (attempts < maxAttempts) {\n      const position = {\n        x: Math.floor(Math.random() * COLS),\n        y: Math.floor(Math.random() * ROWS)\n      };\n      \n      // Check if position is free\n      if (!this.isPositionOccupied(position)) {\n        const foods = this.foodSystem.spawnFoodsWithWeights(\n          position,\n          this.currentLevel.foodConfig.typeWeights\n        );\n        \n        foods.forEach(food => {\n          // Add visual effects for special foods\n          if (food.type !== FoodType.APPLE) {\n            this.addFoodSpawnEffect(food.x, food.y, food.type);\n          }\n        });\n        \n        break;\n      }\n      \n      attempts++;\n    }\n  }\n  \n  private isPositionOccupied(position: Position): boolean {\n    // Check snake\n    if (this.snake.some(segment => segment.x === position.x && segment.y === position.y)) {\n      return true;\n    }\n    \n    // Check obstacles\n    if (this.checkObstacleCollision(position)) {\n      return true;\n    }\n    \n    // Check existing food\n    if (this.foodSystem.isFoodAtPosition(position)) {\n      return true;\n    }\n    \n    return false;\n  }\n  \n  private addFoodSpawnEffect(x: number, y: number, foodType: FoodType): void {\n    const worldX = x * TILE + TILE / 2;\n    const worldY = y * TILE + TILE / 2;\n    \n    const sparkle = this.add.circle(worldX, worldY, 15, 0xffffff, 0.8);\n    \n    this.tweens.add({\n      targets: sparkle,\n      scaleX: 0,\n      scaleY: 0,\n      alpha: 0,\n      duration: 300,\n      ease: 'Quad.easeOut',\n      onComplete: () => sparkle.destroy()\n    });\n  }\n  \n  private handleFoodCollision(food: any): void {\n    const foodId = this.foodSystem.getAllFoods().findIndex(f => f === food).toString();\n    const consumeResult = this.foodSystem.consumeFood(foodId);\n    \n    // Add score\n    this.score += consumeResult.points;\n    \n    // Add coins if applicable\n    if (consumeResult.coins) {\n      this.coins += consumeResult.coins;\n      this.gameState.coins += consumeResult.coins;\n    }\n    \n    // Apply effect if any\n    if (consumeResult.effect) {\n      this.applyFoodEffect(consumeResult.effect);\n    }\n    \n    // Play sound\n    this.soundManager.playFoodSound(food.type);\n    \n    // Create visual effect\n    this.animationManager.animateFoodConsumption(food.x, food.y, food.type);\n    \n    // Handle special food types\n    this.handleSpecialFoodEffects(food.type);\n    \n    // Check level completion\n    this.checkLevelCompletion();\n    \n    // Update statistics\n    this.updateFoodStatistics(food.type);\n  }\n  \n  private applyFoodEffect(effect: FoodEffect): void {\n    const effectId = Date.now().toString() + Math.random().toString();\n    \n    switch (effect.type) {\n      case 'speed':\n        this.speedMultiplier = effect.magnitude || 1.5;\n        this.step = this.baseStep;\n        this.animationManager.animatePowerUpActivation('speed');\n        break;\n        \n      case 'slow':\n        this.speedMultiplier = effect.magnitude || 0.5;\n        this.step = this.baseStep;\n        break;\n        \n      case 'invincible':\n        this.invincible = true;\n        this.animationManager.animatePowerUpActivation('invincible');\n        break;\n        \n      case 'shrink':\n        const shrinkAmount = effect.magnitude || 2;\n        for (let i = 0; i < shrinkAmount && this.snake.length > 1; i++) {\n          this.snake.pop();\n        }\n        this.animationManager.animatePowerUpActivation('shrink');\n        return; // Don't add to active effects as it's instant\n        \n      case 'multi':\n        const multiAmount = effect.magnitude || 4;\n        for (let i = 0; i < multiAmount; i++) {\n          this.spawnFood();\n        }\n        this.animationManager.animatePowerUpActivation('multi');\n        return; // Don't add to active effects as it's instant\n    }\n    \n    // Add to active effects if it has duration\n    if (effect.duration > 0) {\n      this.activeEffects.set(effectId, {\n        effect,\n        timeLeft: effect.duration\n      });\n    }\n  }\n  \n  private handleSpecialFoodEffects(foodType: FoodType): void {\n    switch (foodType) {\n      case FoodType.BOMB_FOOD:\n        // Bomb food is dangerous!\n        this.handleCollision('bomb');\n        break;\n        \n      case FoodType.MYSTERY_FOOD:\n        // Mystery food has random effects (handled by FoodSystem)\n        break;\n        \n      case FoodType.MULTI_APPLE:\n        // Multi apple spawns additional foods (handled in applyFoodEffect)\n        break;\n    }\n  }\n  \n  private handleCollision(type: string): void {\n    if (this.invincible) return;\n    \n    this.lives--;\n    this.soundManager.playSound('game_over');\n    this.animationManager.shakeScreen(15, 500);\n    this.animationManager.flashScreen(0xff0000, 0.7, 300);\n    \n    if (this.lives <= 0) {\n      this.gameOver = true;\n      this.handleGameOver();\n    } else {\n      // Reset snake position but keep progress\n      this.snake = [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }];\n      this.dir = { x: 1, y: 0 };\n      this.nextDir = { x: 1, y: 0 };\n      this.activeEffects.clear();\n      this.invincible = false;\n      this.speedMultiplier = 1;\n      this.step = this.baseStep;\n      \n      // Brief invincibility after respawn\n      this.invincible = true;\n      this.time.delayedCall(2000, () => {\n        this.invincible = false;\n      });\n    }\n  }\n  \n  private checkLevelCompletion(): void {\n    if (this.score >= this.currentLevel.targetScore) {\n      this.levelCompleted = true;\n      this.handleLevelComplete();\n    }\n  }\n  \n  private handleLevelComplete(): void {\n    this.soundManager.playSound('level_complete');\n    this.animationManager.animateLevelComplete();\n    \n    // Update game state\n    this.gameState.completedLevels.add(this.levelNumber);\n    this.gameState.coins += this.currentLevel.rewards.coins;\n    this.gameState.experience += this.currentLevel.rewards.experience;\n    this.gameState.statistics.levelsCompleted++;\n    this.gameState.statistics.totalScore += this.score;\n    \n    // Show completion screen after a delay\n    this.time.delayedCall(3000, () => {\n      this.showLevelCompleteScreen();\n    });\n  }\n  \n  private handleGameOver(): void {\n    this.animationManager.animateGameOver(this.snake);\n    \n    // Update statistics\n    this.gameState.statistics.gamesPlayed++;\n    this.gameState.statistics.totalScore += this.score;\n    this.gameState.statistics.longestSnake = Math.max(\n      this.gameState.statistics.longestSnake,\n      this.snake.length\n    );\n    \n    // Show game over screen\n    this.time.delayedCall(2000, () => {\n      this.showGameOverScreen();\n    });\n  }\n  \n  private showLevelCompleteScreen(): void {\n    // Create completion overlay\n    const overlay = this.add.graphics();\n    overlay.fillStyle(0x000000, 0.8);\n    overlay.fillRect(0, 0, WIDTH, HEIGHT);\n    \n    const completeText = this.add.text(\n      WIDTH / 2,\n      HEIGHT / 2 - 80,\n      'LEVEL COMPLETE!',\n      {\n        fontSize: '36px',\n        fontFamily: 'Arial, sans-serif',\n        color: '#00ff00',\n        stroke: '#000000',\n        strokeThickness: 3,\n        fontStyle: 'bold'\n      }\n    ).setOrigin(0.5);\n    \n    const statsText = this.add.text(\n      WIDTH / 2,\n      HEIGHT / 2 - 20,\n      `Score: ${this.score}\\nCoins Earned: ${this.currentLevel.rewards.coins}\\nXP Gained: ${this.currentLevel.rewards.experience}`,\n      {\n        fontSize: '18px',\n        fontFamily: 'Arial, sans-serif',\n        color: '#ffffff',\n        align: 'center',\n        lineSpacing: 10\n      }\n    ).setOrigin(0.5);\n    \n    const continueText = this.add.text(\n      WIDTH / 2,\n      HEIGHT / 2 + 60,\n      'Press SPACE to continue',\n      {\n        fontSize: '16px',\n        fontFamily: 'Arial, sans-serif',\n        color: '#ffff00'\n      }\n    ).setOrigin(0.5);\n    \n    // Handle continue input\n    const continueKey = this.input.keyboard.addKey('SPACE');\n    continueKey.on('down', () => {\n      this.proceedToNextLevel();\n    });\n  }\n  \n  private showGameOverScreen(): void {\n    const overlay = this.add.graphics();\n    overlay.fillStyle(0x000000, 0.9);\n    overlay.fillRect(0, 0, WIDTH, HEIGHT);\n    \n    const gameOverText = this.add.text(\n      WIDTH / 2,\n      HEIGHT / 2 - 60,\n      'GAME OVER',\n      {\n        fontSize: '42px',\n        fontFamily: 'Arial, sans-serif',\n        color: '#ff0000',\n        stroke: '#000000',\n        strokeThickness: 4,\n        fontStyle: 'bold'\n      }\n    ).setOrigin(0.5);\n    \n    const finalScoreText = this.add.text(\n      WIDTH / 2,\n      HEIGHT / 2,\n      `Final Score: ${this.score}`,\n      {\n        fontSize: '24px',\n        fontFamily: 'Arial, sans-serif',\n        color: '#ffffff'\n      }\n    ).setOrigin(0.5);\n    \n    const retryText = this.add.text(\n      WIDTH / 2,\n      HEIGHT / 2 + 60,\n      'Press R to retry or ESC for menu',\n      {\n        fontSize: '16px',\n        fontFamily: 'Arial, sans-serif',\n        color: '#ffff00'\n      }\n    ).setOrigin(0.5);\n    \n    // Handle retry/menu input\n    const retryKey = this.input.keyboard.addKey('R');\n    const escKey = this.input.keyboard.addKey('ESC');\n    \n    retryKey.on('down', () => {\n      this.scene.restart({ levelNumber: this.levelNumber, gameState: this.gameState });\n    });\n    \n    escKey.on('down', () => {\n      this.scene.start('MenuScene', { gameState: this.gameState });\n    });\n  }\n  \n  private proceedToNextLevel(): void {\n    const nextLevel = this.levelSystem.getNextLevel(this.levelNumber);\n    if (nextLevel) {\n      this.scene.restart({ levelNumber: nextLevel.id, gameState: this.gameState });\n    } else {\n      // All levels completed!\n      this.showGameCompleteScreen();\n    }\n  }\n  \n  private showGameCompleteScreen(): void {\n    const overlay = this.add.graphics();\n    overlay.fillStyle(0x000000, 0.95);\n    overlay.fillRect(0, 0, WIDTH, HEIGHT);\n    \n    const completeText = this.add.text(\n      WIDTH / 2,\n      HEIGHT / 2,\n      'CONGRATULATIONS!\\nYou completed all 147 levels!',\n      {\n        fontSize: '36px',\n        fontFamily: 'Arial, sans-serif',\n        color: '#ffd700',\n        stroke: '#000000',\n        strokeThickness: 3,\n        fontStyle: 'bold',\n        align: 'center',\n        lineSpacing: 20\n      }\n    ).setOrigin(0.5);\n    \n    // Epic celebration\n    this.animationManager.animateLevelComplete();\n    \n    this.time.delayedCall(5000, () => {\n      this.scene.start('MenuScene', { gameState: this.gameState });\n    });\n  }\n  \n  private updateFoodStatistics(foodType: FoodType): void {\n    if (!this.gameState.statistics.foodEaten[foodType]) {\n      this.gameState.statistics.foodEaten[foodType] = 0;\n    }\n    this.gameState.statistics.foodEaten[foodType]++;\n  }\n  \n  private togglePause(): void {\n    this.paused = !this.paused;\n    \n    if (this.paused) {\n      this.showPauseScreen();\n    } else {\n      this.hidePauseScreen();\n    }\n  }\n  \n  private pauseOverlay?: Phaser.GameObjects.Graphics;\n  private pauseText?: Phaser.GameObjects.Text;\n  \n  private showPauseScreen(): void {\n    this.pauseOverlay = this.add.graphics();\n    this.pauseOverlay.fillStyle(0x000000, 0.7);\n    this.pauseOverlay.fillRect(0, 0, WIDTH, HEIGHT);\n    \n    this.pauseText = this.add.text(\n      WIDTH / 2,\n      HEIGHT / 2,\n      'PAUSED\\nPress ESC to resume',\n      {\n        fontSize: '32px',\n        fontFamily: 'Arial, sans-serif',\n        color: '#ffffff',\n        align: 'center',\n        fontStyle: 'bold'\n      }\n    ).setOrigin(0.5);\n  }\n  \n  private hidePauseScreen(): void {\n    this.pauseOverlay?.destroy();\n    this.pauseText?.destroy();\n  }\n  \n  private updateUI(): void {\n    this.scoreText.setText(`Score: ${this.score}`);\n    this.livesText.setText(`Lives: ${this.lives}`);\n    this.coinsText.setText(`Coins: ${this.coins}`);\n    \n    // Update lives text color based on remaining lives\n    if (this.lives <= 1) {\n      this.livesText.setColor('#ff0000');\n    } else if (this.lives <= 2) {\n      this.livesText.setColor('#ffaa00');\n    } else {\n      this.livesText.setColor('#00ff00');\n    }\n  }\n  \n  private draw(): void {\n    this.graphics.clear();\n    \n    // Draw obstacles\n    this.drawObstacles();\n    \n    // Draw food\n    this.drawFood();\n    \n    // Draw snake\n    this.drawSnake();\n    \n    // Draw effects\n    this.drawActiveEffects();\n  }\n  \n  private drawObstacles(): void {\n    this.obstacles.forEach(obstacle => {\n      const color = this.getObstacleColor(obstacle.type);\n      this.graphics.fillStyle(color);\n      \n      this.graphics.fillRect(\n        obstacle.x * TILE,\n        obstacle.y * TILE,\n        obstacle.width * TILE,\n        obstacle.height * TILE\n      );\n      \n      // Add border for better visibility\n      this.graphics.lineStyle(2, 0xffffff, 0.3);\n      this.graphics.strokeRect(\n        obstacle.x * TILE,\n        obstacle.y * TILE,\n        obstacle.width * TILE,\n        obstacle.height * TILE\n      );\n    });\n  }\n  \n  private getObstacleColor(type: string): number {\n    const colors: Record<string, number> = {\n      wall: 0x8b4513,\n      moving_wall: 0xa0522d,\n      teleporter: 0x9932cc,\n      spike: 0xff4500,\n      laser: 0xff0000\n    };\n    return colors[type] || colors.wall;\n  }\n  \n  private drawFood(): void {\n    this.foodSystem.getAllFoods().forEach(food => {\n      const visual = this.foodSystem.getFoodVisualProperties(food.type);\n      \n      this.graphics.fillStyle(visual.color);\n      \n      if (visual.glow) {\n        // Add glow effect for special foods\n        this.graphics.fillCircle(\n          food.x * TILE + TILE / 2,\n          food.y * TILE + TILE / 2,\n          TILE * visual.size * 0.8\n        );\n      }\n      \n      this.graphics.fillRect(\n        food.x * TILE + (TILE * (1 - visual.size)) / 2,\n        food.y * TILE + (TILE * (1 - visual.size)) / 2,\n        TILE * visual.size,\n        TILE * visual.size\n      );\n    });\n  }\n  \n  private drawSnake(): void {\n    this.snake.forEach((segment, index) => {\n      if (index === 0) {\n        // Draw head\n        this.graphics.fillStyle(this.invincible ? 0xffff00 : 0x88ee88);\n      } else {\n        // Draw body\n        this.graphics.fillStyle(this.invincible ? 0xdddd00 : 0x66cc66);\n      }\n      \n      this.graphics.fillRect(\n        segment.x * TILE,\n        segment.y * TILE,\n        TILE,\n        TILE\n      );\n      \n      // Add border\n      this.graphics.lineStyle(1, 0x000000, 0.5);\n      this.graphics.strokeRect(\n        segment.x * TILE,\n        segment.y * TILE,\n        TILE,\n        TILE\n      );\n    });\n  }\n  \n  private drawActiveEffects(): void {\n    if (this.invincible) {\n      // Draw invincibility shield\n      this.graphics.lineStyle(3, 0xffff00, 0.6 + 0.4 * Math.sin(this.time.now / 200));\n      \n      this.snake.forEach(segment => {\n        this.graphics.strokeCircle(\n          segment.x * TILE + TILE / 2,\n          segment.y * TILE + TILE / 2,\n          TILE * 0.8\n        );\n      });\n    }\n    \n    if (this.speedMultiplier > 1) {\n      // Draw speed lines\n      this.graphics.lineStyle(2, 0x00ffff, 0.4);\n      const head = this.snake[0];\n      const headX = head.x * TILE + TILE / 2;\n      const headY = head.y * TILE + TILE / 2;\n      \n      for (let i = 0; i < 3; i++) {\n        const offset = (i + 1) * 15;\n        this.graphics.lineBetween(\n          headX - this.dir.x * offset,\n          headY - this.dir.y * offset,\n          headX - this.dir.x * (offset + 10),\n          headY - this.dir.y * (offset + 10)\n        );\n      }\n    }\n  }\n  \n  private createDefaultGameState(): GameState {\n    return {\n      currentLevel: 1,\n      score: 0,\n      lives: 3,\n      coins: 100,\n      experience: 0,\n      completedLevels: new Set(),\n      inventory: {\n        skins: ['classic_skin'],\n        powerups: {},\n        themes: [],\n        currentSkin: 'classic_skin',\n        currentTheme: 'default'\n      },\n      settings: {\n        soundEnabled: true,\n        musicEnabled: true,\n        vibrationEnabled: true,\n        controlScheme: 'swipe',\n        difficulty: 'normal'\n      },\n      statistics: {\n        totalScore: 0,\n        gamesPlayed: 0,\n        totalPlayTime: 0,\n        foodEaten: {\n          apple: 0,\n          golden: 0,\n          speed: 0,\n          shrink: 0,\n          multi: 0,\n          power: 0,\n          mystery: 0,\n          bomb: 0,\n          freeze: 0,\n          coin: 0\n        },\n        levelsCompleted: 0,\n        longestSnake: 3,\n        perfectRuns: 0\n      }\n    };\n  }\n}\n\n// Create the game with all scenes\nconst gameConfig: Phaser.Types.Core.GameConfig = {\n  type: Phaser.AUTO,\n  width: WIDTH,\n  height: HEIGHT,\n  parent: \"game\",\n  backgroundColor: \"#0b0d10\",\n  scene: [MenuScene, UltimateSnakeScene, StoreScene],\n  scale: {\n    mode: Phaser.Scale.FIT,\n    autoCenter: Phaser.Scale.CENTER_BOTH\n  },\n  physics: {\n    default: 'arcade',\n    arcade: {\n      gravity: { y: 0 },\n      debug: false\n    }\n  }\n};\n\nnew Phaser.Game(gameConfig);
+  private createForestDecorations(): void {
+    // Add subtle forest elements
+    for (let i = 0; i < 10; i++) {
+      const x = Math.random() * WIDTH;
+      const y = Math.random() * HEIGHT;
+      this.backgroundGraphics.fillStyle(0x0d4f1c, 0.3);
+      this.backgroundGraphics.fillCircle(x, y, Math.random() * 15 + 5);
+    }
+  }
+  
+  private createDesertDecorations(): void {
+    // Add sand dune patterns
+    for (let i = 0; i < 5; i++) {
+      const x = Math.random() * WIDTH;
+      const y = HEIGHT - Math.random() * 100;
+      this.backgroundGraphics.fillStyle(0x8b4513, 0.2);
+      this.backgroundGraphics.fillEllipse(x, y, 100, 30);
+    }
+  }
+  
+  private createSpaceDecorations(): void {
+    // Add stars
+    for (let i = 0; i < 50; i++) {
+      const x = Math.random() * WIDTH;
+      const y = Math.random() * HEIGHT;
+      this.backgroundGraphics.fillStyle(0xffffff, Math.random() * 0.8 + 0.2);
+      this.backgroundGraphics.fillCircle(x, y, 1);
+    }
+  }
+  
+  private createCyberDecorations(): void {
+    // Add grid lines
+    this.backgroundGraphics.lineStyle(1, 0x00ff00, 0.3);
+    for (let x = 0; x < WIDTH; x += 40) {
+      this.backgroundGraphics.lineBetween(x, 0, x, HEIGHT);
+    }
+    for (let y = 0; y < HEIGHT; y += 40) {
+      this.backgroundGraphics.lineBetween(0, y, WIDTH, y);
+    }
+  }
+
+  private createUI(): void {
+    // Score display
+    this.scoreText = this.add.text(10, 10, `Score: ${this.score}`, {
+      fontSize: '18px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#ffffff',
+      backgroundColor: '#000000',
+      padding: { x: 8, y: 4 }
+    });
+    
+    // Lives display
+    this.livesText = this.add.text(10, 40, `Lives: ${this.lives}`, {
+      fontSize: '16px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#ff4444',
+      backgroundColor: '#000000',
+      padding: { x: 8, y: 4 }
+    });
+    
+    // Level display
+    this.levelText = this.add.text(WIDTH - 10, 10, `Level: ${this.levelNumber}`, {
+      fontSize: '16px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#00ff00',
+      backgroundColor: '#000000',
+      padding: { x: 8, y: 4 }
+    }).setOrigin(1, 0);
+    
+    // Coins display
+    this.coinsText = this.add.text(WIDTH - 10, 40, `Coins: ${this.coins}`, {
+      fontSize: '16px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#ffd700',
+      backgroundColor: '#000000',
+      padding: { x: 8, y: 4 }
+    }).setOrigin(1, 0);
+    
+    // Active effects container
+    this.effectsContainer = this.add.container(10, 70);
+    
+    // Add target score if level has one
+    if (this.currentLevel.targetScore) {
+      this.add.text(WIDTH / 2, 10, `Target: ${this.currentLevel.targetScore}`, {
+        fontSize: '16px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#ffff00',
+        backgroundColor: '#000000',
+        padding: { x: 8, y: 4 }
+      }).setOrigin(0.5, 0);
+    }
+  }
+  
+  private setupInput(): void {
+    // Keyboard input
+    this.input.keyboard.on('keydown', (event: KeyboardEvent) => {
+      this.handleKeyInput(event.key);
+    });
+    
+    // Touch/swipe input for mobile
+    this.input.on('pointerdown', this.handleTouchStart, this);
+    this.input.on('pointerup', this.handleTouchEnd, this);
+    
+    // Pause functionality
+    this.input.keyboard.on('keydown-ESC', () => {
+      this.togglePause();
+    });
+  }
+  
+  private handleKeyInput(key: string): void {
+    if (this.gameOver || this.paused) return;
+    
+    switch (key) {
+      case 'ArrowUp':
+      case 'w':
+      case 'W':
+        if (this.dir.y === 0) this.nextDir = { x: 0, y: -1 };
+        break;
+      case 'ArrowDown':
+      case 's':
+      case 'S':
+        if (this.dir.y === 0) this.nextDir = { x: 0, y: 1 };
+        break;
+      case 'ArrowLeft':
+      case 'a':
+      case 'A':
+        if (this.dir.x === 0) this.nextDir = { x: -1, y: 0 };
+        break;
+      case 'ArrowRight':
+      case 'd':
+      case 'D':
+        if (this.dir.x === 0) this.nextDir = { x: 1, y: 0 };
+        break;
+    }
+  }
+  
+  private handleTouchStart(pointer: Phaser.Input.Pointer): void {
+    if (this.gameOver || this.paused) return;
+    this.touchStartPos = { x: pointer.x, y: pointer.y };
+  }
+  
+  private touchStartPos?: Position;
+  
+  private handleTouchEnd(pointer: Phaser.Input.Pointer): void {
+    if (!this.touchStartPos || this.gameOver || this.paused) return;
+    
+    const deltaX = pointer.x - this.touchStartPos.x;
+    const deltaY = pointer.y - this.touchStartPos.y;
+    const minSwipeDistance = 30;
+    
+    if (Math.abs(deltaX) > minSwipeDistance || Math.abs(deltaY) > minSwipeDistance) {
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        // Horizontal swipe
+        if (deltaX > 0 && this.dir.x === 0) {
+          this.nextDir = { x: 1, y: 0 }; // Right
+        } else if (deltaX < 0 && this.dir.x === 0) {
+          this.nextDir = { x: -1, y: 0 }; // Left
+        }
+      } else {
+        // Vertical swipe
+        if (deltaY > 0 && this.dir.y === 0) {
+          this.nextDir = { x: 0, y: 1 }; // Down
+        } else if (deltaY < 0 && this.dir.y === 0) {
+          this.nextDir = { x: 0, y: -1 }; // Up
+        }
+      }
+    }
+    
+    this.touchStartPos = undefined;
+  }
+  
+  private createVisualElements(): void {
+    this.graphics = this.add.graphics();
+  }
+  
+  private showLevelIntro(): void {
+    const introText = this.add.text(
+      WIDTH / 2,
+      HEIGHT / 2,
+      `${this.currentLevel.name}\nDifficulty: ${'★'.repeat(this.currentLevel.difficulty)}`,
+      {
+        fontSize: '32px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#ffffff',
+        stroke: '#000000',
+        strokeThickness: 3,
+        align: 'center',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5);
+    
+    this.tweens.add({
+      targets: introText,
+      alpha: 0,
+      duration: 3000,
+      ease: 'Quad.easeOut',
+      onComplete: () => introText.destroy()
+    });
+    
+    // Show special rules if any
+    if (this.currentLevel.specialRules && this.currentLevel.specialRules.length > 0) {
+      const rulesText = this.add.text(
+        WIDTH / 2,
+        HEIGHT / 2 + 80,
+        `Special Rule: ${this.formatSpecialRule(this.currentLevel.specialRules[0])}`,
+        {
+          fontSize: '18px',
+          fontFamily: 'Arial, sans-serif',
+          color: '#ffff00',
+          stroke: '#000000',
+          strokeThickness: 2,
+          align: 'center'
+        }
+      ).setOrigin(0.5);
+      
+      this.tweens.add({
+        targets: rulesText,
+        alpha: 0,
+        duration: 3000,
+        delay: 1000,
+        ease: 'Quad.easeOut',
+        onComplete: () => rulesText.destroy()
+      });
+    }
+  }
+  
+  private formatSpecialRule(rule: string): string {
+    const ruleNames: Record<string, string> = {
+      no_walls: 'Snake wraps around edges',
+      double_speed: 'Double speed mode',
+      invisible_tail: 'Invisible tail',
+      reverse_controls: 'Reversed controls',
+      shrinking_arena: 'Shrinking play area',
+      growing_tail: 'Continuous growth',
+      mirrored: 'Mirrored movement'
+    };
+    return ruleNames[rule] || rule;
+  }
+  
+  update(time: number, deltaTime: number): void {
+    if (this.gameOver || this.paused || this.levelCompleted) return;
+    
+    // Update active effects
+    this.updateActiveEffects(deltaTime);
+    
+    // Update food system
+    this.foodSystem.update(deltaTime);
+    
+    // Update movement
+    this.updateMovement(deltaTime);
+    
+    // Update obstacles
+    this.updateObstacles(deltaTime);
+    
+    // Check for food spawning
+    this.checkFoodSpawning();
+    
+    // Update UI
+    this.updateUI();
+    
+    // Draw everything
+    this.draw();
+  }
+  
+  private updateActiveEffects(deltaTime: number): void {
+    const effectsToRemove: string[] = [];
+    
+    this.activeEffects.forEach((effectData, effectId) => {
+      effectData.timeLeft -= deltaTime;
+      
+      if (effectData.timeLeft <= 0) {
+        this.removeEffect(effectId, effectData.effect);
+        effectsToRemove.push(effectId);
+      }
+    });
+    
+    effectsToRemove.forEach(id => this.activeEffects.delete(id));
+    
+    this.updateEffectsDisplay();
+  }
+  
+  private removeEffect(effectId: string, effect: FoodEffect): void {
+    switch (effect.type) {
+      case 'speed':
+        this.speedMultiplier = 1;
+        this.step = this.baseStep;
+        break;
+      case 'slow':
+        this.speedMultiplier = 1;
+        this.step = this.baseStep;
+        break;
+      case 'invincible':
+        this.invincible = false;
+        break;
+    }
+  }
+  
+  private updateEffectsDisplay(): void {
+    this.effectsContainer.removeAll(true);
+    
+    let yOffset = 0;
+    this.activeEffects.forEach((effectData, effectId) => {
+      const effectText = this.add.text(
+        0, yOffset,
+        `${this.getEffectName(effectData.effect.type)}: ${Math.ceil(effectData.timeLeft / 1000)}s`,
+        {
+          fontSize: '14px',
+          fontFamily: 'Arial, sans-serif',
+          color: this.getEffectColor(effectData.effect.type),
+          backgroundColor: '#000000',
+          padding: { x: 6, y: 2 }
+        }
+      );
+      
+      this.effectsContainer.add(effectText);
+      yOffset += 20;
+    });
+  }
+  
+  private getEffectName(type: string): string {
+    const names: Record<string, string> = {
+      speed: 'Speed Boost',
+      slow: 'Slowdown',
+      invincible: 'Invincible',
+      reverse: 'Reversed',
+      shrink: 'Shrinking',
+      multi: 'Multi Food'
+    };
+    return names[type] || type;
+  }
+  
+  private getEffectColor(type: string): string {
+    const colors: Record<string, string> = {
+      speed: '#00ffff',
+      slow: '#ff6600',
+      invincible: '#ffff00',
+      reverse: '#ff00ff',
+      shrink: '#ff0000',
+      multi: '#00ff00'
+    };
+    return colors[type] || '#ffffff';
+  }
+  
+  private updateMovement(deltaTime: number): void {
+    this.acc += deltaTime / 1000;
+    
+    const currentStep = this.step / this.speedMultiplier;
+    
+    if (this.acc < currentStep) return;
+    this.acc = 0;
+    
+    // Apply direction change
+    this.dir = { ...this.nextDir };
+    
+    // Move snake
+    const head = this.snake[0];
+    let newHead = {
+      x: head.x + this.dir.x,
+      y: head.y + this.dir.y
+    };
+    
+    // Handle special rules
+    if (this.currentLevel.specialRules?.includes('no_walls')) {
+      // Wrap around edges
+      if (newHead.x < 0) newHead.x = COLS - 1;
+      if (newHead.x >= COLS) newHead.x = 0;
+      if (newHead.y < 0) newHead.y = ROWS - 1;
+      if (newHead.y >= ROWS) newHead.y = 0;
+    } else {
+      // Normal wall collision
+      if (newHead.x < 0 || newHead.x >= COLS || newHead.y < 0 || newHead.y >= ROWS) {
+        this.handleCollision('wall');
+        return;
+      }
+    }
+    
+    // Check obstacle collision
+    if (this.checkObstacleCollision(newHead) && !this.invincible) {
+      this.handleCollision('obstacle');
+      return;
+    }
+    
+    // Check self collision
+    if (this.checkSelfCollision(newHead) && !this.invincible) {
+      this.handleCollision('self');
+      return;
+    }
+    
+    // Move snake
+    this.snake.unshift(newHead);
+    
+    // Check food collision
+    const foodAtPosition = this.foodSystem.getFoodAtPosition(newHead);
+    if (foodAtPosition) {
+      this.handleFoodCollision(foodAtPosition);
+    } else if (!this.shouldGrow()) {
+      this.snake.pop();
+    }
+    
+    // Play movement sound (very quiet)
+    if (Math.random() < 0.1) {
+      this.soundManager.playSound('snake_move', 0.1);
+    }
+  }
+  
+  private shouldGrow(): boolean {
+    // Check if snake should grow due to special rules
+    return this.currentLevel.specialRules?.includes('growing_tail') || false;
+  }
+  
+  private checkObstacleCollision(position: Position): boolean {
+    return this.obstacles.some(obstacle => {
+      return position.x >= obstacle.x &&
+             position.x < obstacle.x + obstacle.width &&
+             position.y >= obstacle.y &&
+             position.y < obstacle.y + obstacle.height &&
+             obstacle.active !== false;
+    });
+  }
+  
+  private checkSelfCollision(position: Position): boolean {
+    return this.snake.slice(1).some(segment => 
+      segment.x === position.x && segment.y === position.y
+    );
+  }
+  
+  private updateObstacles(deltaTime: number): void {
+    this.obstacles.forEach(obstacle => {
+      if (obstacle.type === 'moving_wall' && obstacle.movePattern && obstacle.currentPatternIndex !== undefined) {
+        // Update moving obstacles
+        // This would need more sophisticated timing logic
+        // For now, we'll keep obstacles static
+      }
+    });
+  }
+  
+  private checkFoodSpawning(): void {
+    const currentFoodCount = this.foodSystem.getAllFoods().length;
+    const maxFoods = Math.min(5, Math.floor(this.currentLevel.foodConfig.spawnRate * 2));
+    
+    if (currentFoodCount < maxFoods && Math.random() < this.currentLevel.foodConfig.spawnRate * 0.01) {
+      this.spawnFood();
+    }
+  }
+  
+  private spawnFood(): void {
+    let attempts = 0;
+    const maxAttempts = 100;
+    
+    while (attempts < maxAttempts) {
+      const position = {
+        x: Math.floor(Math.random() * COLS),
+        y: Math.floor(Math.random() * ROWS)
+      };
+      
+      // Check if position is free
+      if (!this.isPositionOccupied(position)) {
+        const foods = this.foodSystem.spawnFoodsWithWeights(
+          position,
+          this.currentLevel.foodConfig.typeWeights
+        );
+        
+        foods.forEach(food => {
+          // Add visual effects for special foods
+          if (food.type !== FoodType.APPLE) {
+            this.addFoodSpawnEffect(food.x, food.y, food.type);
+          }
+        });
+        
+        break;
+      }
+      
+      attempts++;
+    }
+  }
+  
+  private isPositionOccupied(position: Position): boolean {
+    // Check snake
+    if (this.snake.some(segment => segment.x === position.x && segment.y === position.y)) {
+      return true;
+    }
+    
+    // Check obstacles
+    if (this.checkObstacleCollision(position)) {
+      return true;
+    }
+    
+    // Check existing food
+    if (this.foodSystem.isFoodAtPosition(position)) {
+      return true;
+    }
+    
+    return false;
+  }
+  
+  private addFoodSpawnEffect(x: number, y: number, foodType: FoodType): void {
+    const worldX = x * TILE + TILE / 2;
+    const worldY = y * TILE + TILE / 2;
+    
+    const sparkle = this.add.circle(worldX, worldY, 15, 0xffffff, 0.8);
+    
+    this.tweens.add({
+      targets: sparkle,
+      scaleX: 0,
+      scaleY: 0,
+      alpha: 0,
+      duration: 300,
+      ease: 'Quad.easeOut',
+      onComplete: () => sparkle.destroy()
+    });
+  }
+  
+  private handleFoodCollision(food: any): void {
+    const foodId = this.foodSystem.getAllFoods().findIndex(f => f === food).toString();
+    const consumeResult = this.foodSystem.consumeFood(foodId);
+    
+    // Add score
+    this.score += consumeResult.points;
+    
+    // Add coins if applicable
+    if (consumeResult.coins) {
+      this.coins += consumeResult.coins;
+      this.gameState.coins += consumeResult.coins;
+    }
+    
+    // Apply effect if any
+    if (consumeResult.effect) {
+      this.applyFoodEffect(consumeResult.effect);
+    }
+    
+    // Play sound
+    this.soundManager.playFoodSound(food.type);
+    
+    // Create visual effect
+    this.animationManager.animateFoodConsumption(food.x, food.y, food.type);
+    
+    // Handle special food types
+    this.handleSpecialFoodEffects(food.type);
+    
+    // Check level completion
+    this.checkLevelCompletion();
+    
+    // Update statistics
+    this.updateFoodStatistics(food.type);
+  }
+  
+  private applyFoodEffect(effect: FoodEffect): void {
+    const effectId = Date.now().toString() + Math.random().toString();
+    
+    switch (effect.type) {
+      case 'speed':
+        this.speedMultiplier = effect.magnitude || 1.5;
+        this.step = this.baseStep;
+        this.animationManager.animatePowerUpActivation('speed');
+        break;
+        
+      case 'slow':
+        this.speedMultiplier = effect.magnitude || 0.5;
+        this.step = this.baseStep;
+        break;
+        
+      case 'invincible':
+        this.invincible = true;
+        this.animationManager.animatePowerUpActivation('invincible');
+        break;
+        
+      case 'shrink':
+        const shrinkAmount = effect.magnitude || 2;
+        for (let i = 0; i < shrinkAmount && this.snake.length > 1; i++) {
+          this.snake.pop();
+        }
+        this.animationManager.animatePowerUpActivation('shrink');
+        return; // Don't add to active effects as it's instant
+        
+      case 'multi':
+        const multiAmount = effect.magnitude || 4;
+        for (let i = 0; i < multiAmount; i++) {
+          this.spawnFood();
+        }
+        this.animationManager.animatePowerUpActivation('multi');
+        return; // Don't add to active effects as it's instant
+    }
+    
+    // Add to active effects if it has duration
+    if (effect.duration > 0) {
+      this.activeEffects.set(effectId, {
+        effect,
+        timeLeft: effect.duration
+      });
+    }
+  }
+  
+  private handleSpecialFoodEffects(foodType: FoodType): void {
+    switch (foodType) {
+      case FoodType.BOMB_FOOD:
+        // Bomb food is dangerous!
+        this.handleCollision('bomb');
+        break;
+        
+      case FoodType.MYSTERY_FOOD:
+        // Mystery food has random effects (handled by FoodSystem)
+        break;
+        
+      case FoodType.MULTI_APPLE:
+        // Multi apple spawns additional foods (handled in applyFoodEffect)
+        break;
+    }
+  }
+  
+  private handleCollision(type: string): void {
+    if (this.invincible) return;
+    
+    this.lives--;
+    this.soundManager.playSound('game_over');
+    this.animationManager.shakeScreen(15, 500);
+    this.animationManager.flashScreen(0xff0000, 0.7, 300);
+    
+    if (this.lives <= 0) {
+      this.gameOver = true;
+      this.handleGameOver();
+    } else {
+      // Reset snake position but keep progress
+      this.snake = [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }];
+      this.dir = { x: 1, y: 0 };
+      this.nextDir = { x: 1, y: 0 };
+      this.activeEffects.clear();
+      this.invincible = false;
+      this.speedMultiplier = 1;
+      this.step = this.baseStep;
+      
+      // Brief invincibility after respawn
+      this.invincible = true;
+      this.time.delayedCall(2000, () => {
+        this.invincible = false;
+      });
+    }
+  }
+  
+  private checkLevelCompletion(): void {
+    if (this.score >= this.currentLevel.targetScore) {
+      this.levelCompleted = true;
+      this.handleLevelComplete();
+    }
+  }
+  
+  private handleLevelComplete(): void {
+    this.soundManager.playSound('level_complete');
+    this.animationManager.animateLevelComplete();
+    
+    // Update game state
+    this.gameState.completedLevels.add(this.levelNumber);
+    this.gameState.coins += this.currentLevel.rewards.coins;
+    this.gameState.experience += this.currentLevel.rewards.experience;
+    this.gameState.statistics.levelsCompleted++;
+    this.gameState.statistics.totalScore += this.score;
+    
+    // Show completion screen after a delay
+    this.time.delayedCall(3000, () => {
+      this.showLevelCompleteScreen();
+    });
+  }
+  
+  private handleGameOver(): void {
+    this.animationManager.animateGameOver(this.snake);
+    
+    // Update statistics
+    this.gameState.statistics.gamesPlayed++;
+    this.gameState.statistics.totalScore += this.score;
+    this.gameState.statistics.longestSnake = Math.max(
+      this.gameState.statistics.longestSnake,
+      this.snake.length
+    );
+    
+    // Show game over screen
+    this.time.delayedCall(2000, () => {
+      this.showGameOverScreen();
+    });
+  }
+  
+  private showLevelCompleteScreen(): void {
+    // Create completion overlay
+    const overlay = this.add.graphics();
+    overlay.fillStyle(0x000000, 0.8);
+    overlay.fillRect(0, 0, WIDTH, HEIGHT);
+    
+    const completeText = this.add.text(
+      WIDTH / 2,
+      HEIGHT / 2 - 80,
+      'LEVEL COMPLETE!',
+      {
+        fontSize: '36px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#00ff00',
+        stroke: '#000000',
+        strokeThickness: 3,
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5);
+    
+    const statsText = this.add.text(
+      WIDTH / 2,
+      HEIGHT / 2 - 20,
+      `Score: ${this.score}\nCoins Earned: ${this.currentLevel.rewards.coins}\nXP Gained: ${this.currentLevel.rewards.experience}`,
+      {
+        fontSize: '18px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#ffffff',
+        align: 'center',
+        lineSpacing: 10
+      }
+    ).setOrigin(0.5);
+    
+    const continueText = this.add.text(
+      WIDTH / 2,
+      HEIGHT / 2 + 60,
+      'Press SPACE to continue',
+      {
+        fontSize: '16px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#ffff00'
+      }
+    ).setOrigin(0.5);
+    
+    // Handle continue input
+    const continueKey = this.input.keyboard.addKey('SPACE');
+    continueKey.on('down', () => {
+      this.proceedToNextLevel();
+    });
+  }
+  
+  private showGameOverScreen(): void {
+    const overlay = this.add.graphics();
+    overlay.fillStyle(0x000000, 0.9);
+    overlay.fillRect(0, 0, WIDTH, HEIGHT);
+    
+    const gameOverText = this.add.text(
+      WIDTH / 2,
+      HEIGHT / 2 - 60,
+      'GAME OVER',
+      {
+        fontSize: '42px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#ff0000',
+        stroke: '#000000',
+        strokeThickness: 4,
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5);
+    
+    const finalScoreText = this.add.text(
+      WIDTH / 2,
+      HEIGHT / 2,
+      `Final Score: ${this.score}`,
+      {
+        fontSize: '24px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#ffffff'
+      }
+    ).setOrigin(0.5);
+    
+    const retryText = this.add.text(
+      WIDTH / 2,
+      HEIGHT / 2 + 60,
+      'Press R to retry or ESC for menu',
+      {
+        fontSize: '16px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#ffff00'
+      }
+    ).setOrigin(0.5);
+    
+    // Handle retry/menu input
+    const retryKey = this.input.keyboard.addKey('R');
+    const escKey = this.input.keyboard.addKey('ESC');
+    
+    retryKey.on('down', () => {
+      this.scene.restart({ levelNumber: this.levelNumber, gameState: this.gameState });
+    });
+    
+    escKey.on('down', () => {
+      this.scene.start('MenuScene', { gameState: this.gameState });
+    });
+  }
+  
+  private proceedToNextLevel(): void {
+    const nextLevel = this.levelSystem.getNextLevel(this.levelNumber);
+    if (nextLevel) {
+      this.scene.restart({ levelNumber: nextLevel.id, gameState: this.gameState });
+    } else {
+      // All levels completed!
+      this.showGameCompleteScreen();
+    }
+  }
+  
+  private showGameCompleteScreen(): void {
+    const overlay = this.add.graphics();
+    overlay.fillStyle(0x000000, 0.95);
+    overlay.fillRect(0, 0, WIDTH, HEIGHT);
+    
+    const completeText = this.add.text(
+      WIDTH / 2,
+      HEIGHT / 2,
+      'CONGRATULATIONS!\nYou completed all 147 levels!',
+      {
+        fontSize: '36px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#ffd700',
+        stroke: '#000000',
+        strokeThickness: 3,
+        fontStyle: 'bold',
+        align: 'center',
+        lineSpacing: 20
+      }
+    ).setOrigin(0.5);
+    
+    // Epic celebration
+    this.animationManager.animateLevelComplete();
+    
+    this.time.delayedCall(5000, () => {
+      this.scene.start('MenuScene', { gameState: this.gameState });
+    });
+  }
+  
+  private updateFoodStatistics(foodType: FoodType): void {
+    if (!this.gameState.statistics.foodEaten[foodType]) {
+      this.gameState.statistics.foodEaten[foodType] = 0;
+    }
+    this.gameState.statistics.foodEaten[foodType]++;
+  }
+  
+  private togglePause(): void {
+    this.paused = !this.paused;
+    
+    if (this.paused) {
+      this.showPauseScreen();
+    } else {
+      this.hidePauseScreen();
+    }
+  }
+  
+  private pauseOverlay?: Phaser.GameObjects.Graphics;
+  private pauseText?: Phaser.GameObjects.Text;
+  
+  private showPauseScreen(): void {
+    this.pauseOverlay = this.add.graphics();
+    this.pauseOverlay.fillStyle(0x000000, 0.7);
+    this.pauseOverlay.fillRect(0, 0, WIDTH, HEIGHT);
+    
+    this.pauseText = this.add.text(
+      WIDTH / 2,
+      HEIGHT / 2,
+      'PAUSED\nPress ESC to resume',
+      {
+        fontSize: '32px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#ffffff',
+        align: 'center',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5);
+  }
+  
+  private hidePauseScreen(): void {
+    this.pauseOverlay?.destroy();
+    this.pauseText?.destroy();
+  }
+  
+  private updateUI(): void {
+    this.scoreText.setText(`Score: ${this.score}`);
+    this.livesText.setText(`Lives: ${this.lives}`);
+    this.coinsText.setText(`Coins: ${this.coins}`);
+    
+    // Update lives text color based on remaining lives
+    if (this.lives <= 1) {
+      this.livesText.setColor('#ff0000');
+    } else if (this.lives <= 2) {
+      this.livesText.setColor('#ffaa00');
+    } else {
+      this.livesText.setColor('#00ff00');
+    }
+  }
+  
+  private draw(): void {
+    this.graphics.clear();
+    
+    // Draw obstacles
+    this.drawObstacles();
+    
+    // Draw food
+    this.drawFood();
+    
+    // Draw snake
+    this.drawSnake();
+    
+    // Draw effects
+    this.drawActiveEffects();
+  }
+  
+  private drawObstacles(): void {
+    this.obstacles.forEach(obstacle => {
+      const color = this.getObstacleColor(obstacle.type);
+      this.graphics.fillStyle(color);
+      
+      this.graphics.fillRect(
+        obstacle.x * TILE,
+        obstacle.y * TILE,
+        obstacle.width * TILE,
+        obstacle.height * TILE
+      );
+      
+      // Add border for better visibility
+      this.graphics.lineStyle(2, 0xffffff, 0.3);
+      this.graphics.strokeRect(
+        obstacle.x * TILE,
+        obstacle.y * TILE,
+        obstacle.width * TILE,
+        obstacle.height * TILE
+      );
+    });
+  }
+  
+  private getObstacleColor(type: string): number {
+    const colors: Record<string, number> = {
+      wall: 0x8b4513,
+      moving_wall: 0xa0522d,
+      teleporter: 0x9932cc,
+      spike: 0xff4500,
+      laser: 0xff0000
+    };
+    return colors[type] || colors.wall;
+  }
+  
+  private drawFood(): void {
+    this.foodSystem.getAllFoods().forEach(food => {
+      const visual = this.foodSystem.getFoodVisualProperties(food.type);
+      
+      this.graphics.fillStyle(visual.color);
+      
+      if (visual.glow) {
+        // Add glow effect for special foods
+        this.graphics.fillCircle(
+          food.x * TILE + TILE / 2,
+          food.y * TILE + TILE / 2,
+          TILE * visual.size * 0.8
+        );
+      }
+      
+      this.graphics.fillRect(
+        food.x * TILE + (TILE * (1 - visual.size)) / 2,
+        food.y * TILE + (TILE * (1 - visual.size)) / 2,
+        TILE * visual.size,
+        TILE * visual.size
+      );
+    });
+  }
+  
+  private drawSnake(): void {
+    this.snake.forEach((segment, index) => {
+      if (index === 0) {
+        // Draw head
+        this.graphics.fillStyle(this.invincible ? 0xffff00 : 0x88ee88);
+      } else {
+        // Draw body
+        this.graphics.fillStyle(this.invincible ? 0xdddd00 : 0x66cc66);
+      }
+      
+      this.graphics.fillRect(
+        segment.x * TILE,
+        segment.y * TILE,
+        TILE,
+        TILE
+      );
+      
+      // Add border
+      this.graphics.lineStyle(1, 0x000000, 0.5);
+      this.graphics.strokeRect(
+        segment.x * TILE,
+        segment.y * TILE,
+        TILE,
+        TILE
+      );
+    });
+  }
+  
+  private drawActiveEffects(): void {
+    if (this.invincible) {
+      // Draw invincibility shield
+      this.graphics.lineStyle(3, 0xffff00, 0.6 + 0.4 * Math.sin(this.time.now / 200));
+      
+      this.snake.forEach(segment => {
+        this.graphics.strokeCircle(
+          segment.x * TILE + TILE / 2,
+          segment.y * TILE + TILE / 2,
+          TILE * 0.8
+        );
+      });
+    }
+    
+    if (this.speedMultiplier > 1) {
+      // Draw speed lines
+      this.graphics.lineStyle(2, 0x00ffff, 0.4);
+      const head = this.snake[0];
+      const headX = head.x * TILE + TILE / 2;
+      const headY = head.y * TILE + TILE / 2;
+      
+      for (let i = 0; i < 3; i++) {
+        const offset = (i + 1) * 15;
+        this.graphics.lineBetween(
+          headX - this.dir.x * offset,
+          headY - this.dir.y * offset,
+          headX - this.dir.x * (offset + 10),
+          headY - this.dir.y * (offset + 10)
+        );
+      }
+    }
+  }
+  
+  private createDefaultGameState(): GameState {
+    return {
+      currentLevel: 1,
+      score: 0,
+      lives: 3,
+      coins: 100,
+      experience: 0,
+      completedLevels: new Set(),
+      inventory: {
+        skins: ['classic_skin'],
+        powerups: {},
+        themes: [],
+        currentSkin: 'classic_skin',
+        currentTheme: 'default'
+      },
+      settings: {
+        soundEnabled: true,
+        musicEnabled: true,
+        vibrationEnabled: true,
+        controlScheme: 'swipe',
+        difficulty: 'normal'
+      },
+      statistics: {
+        totalScore: 0,
+        gamesPlayed: 0,
+        totalPlayTime: 0,
+        foodEaten: {
+          apple: 0,
+          golden: 0,
+          speed: 0,
+          shrink: 0,
+          multi: 0,
+          power: 0,
+          mystery: 0,
+          bomb: 0,
+          freeze: 0,
+          coin: 0
+        },
+        levelsCompleted: 0,
+        longestSnake: 3,
+        perfectRuns: 0
+      }
+    };
+  }
+}
+
+// Create the game with all scenes
+const gameConfig: Phaser.Types.Core.GameConfig = {
+  type: Phaser.AUTO,
+  width: WIDTH,
+  height: HEIGHT,
+  parent: "game",
+  backgroundColor: "#0b0d10",
+  scene: [MenuScene, UltimateSnakeScene, StoreScene],
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
+  physics: {
+    default: 'arcade',
+    arcade: {
+      gravity: { y: 0 },
+      debug: false
+    }
+  }
+};
+
+new Phaser.Game(gameConfig);

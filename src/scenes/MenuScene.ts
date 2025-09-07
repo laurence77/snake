@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import { LevelSystem } from '../systems/LevelSystem';
-import { StoreSystem } from '../systems/StoreSystem';
 import { GameState } from '../types/GameTypes';
 
 /**
@@ -8,7 +7,6 @@ import { GameState } from '../types/GameTypes';
  */
 export class MenuScene extends Phaser.Scene {
   private levelSystem!: LevelSystem;
-  private storeSystem!: StoreSystem;
   private gameState!: GameState;
   private currentPage = 0;
   private levelsPerPage = 15;
@@ -30,7 +28,6 @@ export class MenuScene extends Phaser.Scene {
   
   init(data: { gameState: GameState }) {
     this.levelSystem = new LevelSystem();
-    this.storeSystem = new StoreSystem();
     this.gameState = data.gameState || this.createInitialGameState();
   }
   
@@ -54,4 +51,496 @@ export class MenuScene extends Phaser.Scene {
     this.createBackgroundParticles();
   }
   
-  private createBackgroundParticles(): void {\n    // Create subtle moving particles for visual interest\n    for (let i = 0; i < 20; i++) {\n      const particle = this.add.circle(\n        Math.random() * this.scale.width,\n        Math.random() * this.scale.height,\n        Math.random() * 3 + 1,\n        0x10b981,\n        0.1\n      );\n      \n      this.tweens.add({\n        targets: particle,\n        y: particle.y + Math.random() * 100 - 50,\n        x: particle.x + Math.random() * 100 - 50,\n        alpha: Math.random() * 0.3,\n        duration: 3000 + Math.random() * 2000,\n        yoyo: true,\n        repeat: -1,\n        ease: 'Sine.easeInOut'\n      });\n    }\n  }\n  \n  private createTitle(): void {\n    this.titleText = this.add.text(\n      this.scale.width / 2,\n      60,\n      'Snake Classic',\n      {\n        fontSize: '48px',\n        fontFamily: 'Arial, sans-serif',\n        color: '#ffffff',\n        stroke: '#10b981',\n        strokeThickness: 3\n      }\n    ).setOrigin(0.5);\n    \n    // Add pulsing effect to title\n    this.tweens.add({\n      targets: this.titleText,\n      scaleX: 1.05,\n      scaleY: 1.05,\n      duration: 2000,\n      yoyo: true,\n      repeat: -1,\n      ease: 'Sine.easeInOut'\n    });\n  }\n  \n  private createCoinDisplay(): void {\n    this.coinDisplay = this.add.container(this.scale.width - 150, 30);\n    \n    // Coin background\n    const coinBg = this.add.graphics();\n    coinBg.fillStyle(0x047857, 0.8);\n    coinBg.fillRoundedRect(-70, -15, 140, 30, 15);\n    coinBg.lineStyle(2, 0x10b981);\n    coinBg.strokeRoundedRect(-70, -15, 140, 30, 15);\n    \n    // Coin icon\n    const coinIcon = this.add.circle(-50, 0, 12, 0xffd700);\n    coinIcon.setStrokeStyle(2, 0xffa500);\n    \n    // Coin text\n    const coinText = this.add.text(0, 0, this.gameState.coins.toString(), {\n      fontSize: '20px',\n      fontFamily: 'Arial, sans-serif',\n      color: '#ffffff',\n      fontStyle: 'bold'\n    }).setOrigin(0.5);\n    \n    this.coinDisplay.add([coinBg, coinIcon, coinText]);\n  }\n  \n  private createProgressBar(): void {\n    const barWidth = 300;\n    const barHeight = 10;\n    const x = (this.scale.width - barWidth) / 2;\n    const y = 120;\n    \n    this.progressBar = this.add.graphics();\n    \n    // Background\n    this.progressBar.fillStyle(0x333333, 0.8);\n    this.progressBar.fillRoundedRect(x, y, barWidth, barHeight, 5);\n    \n    // Progress fill\n    const progress = this.levelSystem.getLevelProgress(this.gameState.completedLevels);\n    this.progressBar.fillStyle(0x10b981, 1);\n    this.progressBar.fillRoundedRect(x, y, barWidth * progress, barHeight, 5);\n    \n    // Progress text\n    const progressText = `${this.gameState.completedLevels.size} / 147 Levels Complete`;\n    this.add.text(\n      this.scale.width / 2,\n      y + barHeight + 20,\n      progressText,\n      {\n        fontSize: '16px',\n        fontFamily: 'Arial, sans-serif',\n        color: '#cccccc'\n      }\n    ).setOrigin(0.5);\n  }\n  \n  private createLevelGrid(): void {\n    this.levelContainer = this.add.container(0, 180);\n    \n    const startX = 80;\n    const startY = 20;\n    const spacing = 60;\n    const cols = 5;\n    const rows = 3;\n    \n    const startLevel = this.currentPage * this.levelsPerPage + 1;\n    const endLevel = Math.min(startLevel + this.levelsPerPage - 1, 147);\n    \n    let levelIndex = 0;\n    \n    for (let level = startLevel; level <= endLevel; level++) {\n      const row = Math.floor(levelIndex / cols);\n      const col = levelIndex % cols;\n      const x = startX + col * spacing;\n      const y = startY + row * spacing;\n      \n      this.createLevelButton(level, x, y);\n      levelIndex++;\n    }\n  }\n  \n  private createLevelButton(levelNumber: number, x: number, y: number): void {\n    const levelData = this.levelSystem.getLevel(levelNumber);\n    if (!levelData) return;\n    \n    const isCompleted = this.gameState.completedLevels.has(levelNumber);\n    const isUnlocked = levelNumber === 1 || this.gameState.completedLevels.has(levelNumber - 1);\n    const canPlay = isUnlocked && !isCompleted;\n    \n    // Button container\n    const buttonContainer = this.add.container(x, y);\n    \n    // Button background\n    const buttonBg = this.add.graphics();\n    let bgColor = 0x333333; // Locked\n    let borderColor = 0x555555;\n    \n    if (isCompleted) {\n      bgColor = 0x10b981; // Completed - green\n      borderColor = 0x047857;\n    } else if (isUnlocked) {\n      bgColor = 0x047857; // Available - dark green\n      borderColor = 0x10b981;\n    }\n    \n    buttonBg.fillStyle(bgColor, 0.9);\n    buttonBg.fillRoundedRect(-25, -25, 50, 50, 8);\n    buttonBg.lineStyle(2, borderColor);\n    buttonBg.strokeRoundedRect(-25, -25, 50, 50, 8);\n    \n    // Level number\n    const levelText = this.add.text(0, -5, levelNumber.toString(), {\n      fontSize: '18px',\n      fontFamily: 'Arial, sans-serif',\n      color: '#ffffff',\n      fontStyle: 'bold'\n    }).setOrigin(0.5);\n    \n    // Difficulty stars\n    const starY = 12;\n    const starSpacing = 6;\n    const starCount = Math.min(levelData.difficulty, 5);\n    const startX = -(starCount - 1) * starSpacing / 2;\n    \n    for (let i = 0; i < starCount; i++) {\n      const star = this.add.text(\n        startX + i * starSpacing,\n        starY,\n        '★',\n        {\n          fontSize: '8px',\n          color: '#ffd700'\n        }\n      ).setOrigin(0.5);\n      buttonContainer.add(star);\n    }\n    \n    buttonContainer.add([buttonBg, levelText]);\n    this.levelContainer.add(buttonContainer);\n    \n    // Add interactivity\n    if (canPlay || isCompleted) {\n      buttonContainer.setInteractive(\n        new Phaser.Geom.Rectangle(-25, -25, 50, 50),\n        Phaser.Geom.Rectangle.Contains\n      );\n      \n      buttonContainer.on('pointerover', () => {\n        buttonBg.clear();\n        buttonBg.fillStyle(bgColor, 1);\n        buttonBg.fillRoundedRect(-25, -25, 50, 50, 8);\n        buttonBg.lineStyle(3, 0xffd700);\n        buttonBg.strokeRoundedRect(-25, -25, 50, 50, 8);\n        \n        this.tweens.add({\n          targets: buttonContainer,\n          scaleX: 1.1,\n          scaleY: 1.1,\n          duration: 100\n        });\n      });\n      \n      buttonContainer.on('pointerout', () => {\n        buttonBg.clear();\n        buttonBg.fillStyle(bgColor, 0.9);\n        buttonBg.fillRoundedRect(-25, -25, 50, 50, 8);\n        buttonBg.lineStyle(2, borderColor);\n        buttonBg.strokeRoundedRect(-25, -25, 50, 50, 8);\n        \n        this.tweens.add({\n          targets: buttonContainer,\n          scaleX: 1,\n          scaleY: 1,\n          duration: 100\n        });\n      });\n      \n      buttonContainer.on('pointerdown', () => {\n        this.startLevel(levelNumber);\n      });\n    }\n    \n    // Add lock icon for locked levels\n    if (!isUnlocked) {\n      const lockIcon = this.add.text(0, 0, '🔒', {\n        fontSize: '16px'\n      }).setOrigin(0.5);\n      buttonContainer.add(lockIcon);\n    }\n    \n    // Add completion checkmark\n    if (isCompleted) {\n      const checkmark = this.add.text(18, -18, '✓', {\n        fontSize: '14px',\n        color: '#ffffff',\n        fontStyle: 'bold'\n      }).setOrigin(0.5);\n      buttonContainer.add(checkmark);\n    }\n  }\n  \n  private createNavigationButtons(): void {\n    const buttonY = this.scale.height - 80;\n    const totalPages = Math.ceil(147 / this.levelsPerPage);\n    \n    // Previous page button\n    if (this.currentPage > 0) {\n      this.prevPageButton = this.createNavButton(100, buttonY, '◀ Previous', () => {\n        this.currentPage--;\n        this.refreshLevelGrid();\n      });\n    }\n    \n    // Next page button\n    if (this.currentPage < totalPages - 1) {\n      this.nextPageButton = this.createNavButton(\n        this.scale.width - 100,\n        buttonY,\n        'Next ▶',\n        () => {\n          this.currentPage++;\n          this.refreshLevelGrid();\n        }\n      );\n    }\n    \n    // Page indicator\n    this.add.text(\n      this.scale.width / 2,\n      buttonY,\n      `Page ${this.currentPage + 1} of ${totalPages}`,\n      {\n        fontSize: '16px',\n        fontFamily: 'Arial, sans-serif',\n        color: '#cccccc'\n      }\n    ).setOrigin(0.5);\n  }\n  \n  private createNavButton(\n    x: number,\n    y: number,\n    text: string,\n    callback: () => void\n  ): Phaser.GameObjects.Container {\n    const button = this.add.container(x, y);\n    \n    const bg = this.add.graphics();\n    bg.fillStyle(0x047857, 0.8);\n    bg.fillRoundedRect(-60, -20, 120, 40, 10);\n    bg.lineStyle(2, 0x10b981);\n    bg.strokeRoundedRect(-60, -20, 120, 40, 10);\n    \n    const buttonText = this.add.text(0, 0, text, {\n      fontSize: '16px',\n      fontFamily: 'Arial, sans-serif',\n      color: '#ffffff',\n      fontStyle: 'bold'\n    }).setOrigin(0.5);\n    \n    button.add([bg, buttonText]);\n    \n    button.setInteractive(\n      new Phaser.Geom.Rectangle(-60, -20, 120, 40),\n      Phaser.Geom.Rectangle.Contains\n    );\n    \n    button.on('pointerover', () => {\n      bg.clear();\n      bg.fillStyle(0x10b981, 1);\n      bg.fillRoundedRect(-60, -20, 120, 40, 10);\n      bg.lineStyle(2, 0xffd700);\n      bg.strokeRoundedRect(-60, -20, 120, 40, 10);\n    });\n    \n    button.on('pointerout', () => {\n      bg.clear();\n      bg.fillStyle(0x047857, 0.8);\n      bg.fillRoundedRect(-60, -20, 120, 40, 10);\n      bg.lineStyle(2, 0x10b981);\n      bg.strokeRoundedRect(-60, -20, 120, 40, 10);\n    });\n    \n    button.on('pointerdown', callback);\n    \n    return button;\n  }\n  \n  private createMenuButtons(): void {\n    const buttonY = 30;\n    \n    // Store button\n    this.storeButton = this.createMenuButton(\n      30,\n      buttonY,\n      '🏪 Store',\n      () => this.openStore()\n    );\n    \n    // Settings button\n    this.settingsButton = this.createMenuButton(\n      30,\n      buttonY + 60,\n      '⚙️ Settings',\n      () => this.openSettings()\n    );\n  }\n  \n  private createMenuButton(\n    x: number,\n    y: number,\n    text: string,\n    callback: () => void\n  ): Phaser.GameObjects.Container {\n    const button = this.add.container(x, y);\n    \n    const bg = this.add.graphics();\n    bg.fillStyle(0x2d3748, 0.9);\n    bg.fillRoundedRect(-35, -15, 70, 30, 8);\n    bg.lineStyle(1, 0x4a5568);\n    bg.strokeRoundedRect(-35, -15, 70, 30, 8);\n    \n    const buttonText = this.add.text(0, 0, text, {\n      fontSize: '12px',\n      fontFamily: 'Arial, sans-serif',\n      color: '#ffffff'\n    }).setOrigin(0.5);\n    \n    button.add([bg, buttonText]);\n    \n    button.setInteractive(\n      new Phaser.Geom.Rectangle(-35, -15, 70, 30),\n      Phaser.Geom.Rectangle.Contains\n    );\n    \n    button.on('pointerover', () => {\n      this.tweens.add({\n        targets: button,\n        scaleX: 1.05,\n        scaleY: 1.05,\n        duration: 100\n      });\n    });\n    \n    button.on('pointerout', () => {\n      this.tweens.add({\n        targets: button,\n        scaleX: 1,\n        scaleY: 1,\n        duration: 100\n      });\n    });\n    \n    button.on('pointerdown', callback);\n    \n    return button;\n  }\n  \n  private refreshLevelGrid(): void {\n    this.levelContainer.destroy();\n    if (this.prevPageButton) this.prevPageButton.destroy();\n    if (this.nextPageButton) this.nextPageButton.destroy();\n    \n    this.createLevelGrid();\n    this.createNavigationButtons();\n  }\n  \n  private updateDisplay(): void {\n    // Update coin display\n    const coinText = this.coinDisplay.getAt(2) as Phaser.GameObjects.Text;\n    coinText.setText(this.gameState.coins.toString());\n  }\n  \n  private startLevel(levelNumber: number): void {\n    // Add sound effect\n    // this.sound.play('button_click');\n    \n    // Transition to game scene\n    this.scene.start('GameScene', {\n      levelNumber,\n      gameState: this.gameState\n    });\n  }\n  \n  private openStore(): void {\n    this.scene.start('StoreScene', {\n      gameState: this.gameState,\n      returnScene: 'MenuScene'\n    });\n  }\n  \n  private openSettings(): void {\n    this.scene.start('SettingsScene', {\n      gameState: this.gameState,\n      returnScene: 'MenuScene'\n    });\n  }\n  \n  private createInitialGameState(): GameState {\n    return {\n      currentLevel: 1,\n      score: 0,\n      lives: 3,\n      coins: 100,\n      experience: 0,\n      completedLevels: new Set(),\n      inventory: {\n        skins: ['classic_skin'],\n        powerups: {},\n        themes: [],\n        currentSkin: 'classic_skin',\n        currentTheme: 'default'\n      },\n      settings: {\n        soundEnabled: true,\n        musicEnabled: true,\n        vibrationEnabled: true,\n        controlScheme: 'swipe',\n        difficulty: 'normal'\n      },\n      statistics: {\n        totalScore: 0,\n        gamesPlayed: 0,\n        totalPlayTime: 0,\n        foodEaten: {\n          apple: 0,\n          golden: 0,\n          speed: 0,\n          shrink: 0,\n          multi: 0,\n          power: 0,\n          mystery: 0,\n          bomb: 0,\n          freeze: 0,\n          coin: 0\n        },\n        levelsCompleted: 0,\n        longestSnake: 3,\n        perfectRuns: 0\n      }\n    };\n  }\n}
+  private createBackgroundParticles(): void {
+    // Create subtle moving particles for visual interest
+    for (let i = 0; i < 20; i++) {
+      const particle = this.add.circle(
+        Math.random() * this.scale.width,
+        Math.random() * this.scale.height,
+        Math.random() * 3 + 1,
+        0x10b981,
+        0.1
+      );
+      
+      this.tweens.add({
+        targets: particle,
+        y: particle.y + Math.random() * 100 - 50,
+        x: particle.x + Math.random() * 100 - 50,
+        alpha: Math.random() * 0.3,
+        duration: 3000 + Math.random() * 2000,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
+      });
+    }
+  }
+  
+  private createTitle(): void {
+    this.titleText = this.add.text(
+      this.scale.width / 2,
+      60,
+      'Snake Classic',
+      {
+        fontSize: '48px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#ffffff',
+        stroke: '#10b981',
+        strokeThickness: 3
+      }
+    ).setOrigin(0.5);
+    
+    // Add pulsing effect to title
+    this.tweens.add({
+      targets: this.titleText,
+      scaleX: 1.05,
+      scaleY: 1.05,
+      duration: 2000,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+  }
+  
+  private createCoinDisplay(): void {
+    this.coinDisplay = this.add.container(this.scale.width - 150, 30);
+    
+    // Coin background
+    const coinBg = this.add.graphics();
+    coinBg.fillStyle(0x047857, 0.8);
+    coinBg.fillRoundedRect(-70, -15, 140, 30, 15);
+    coinBg.lineStyle(2, 0x10b981);
+    coinBg.strokeRoundedRect(-70, -15, 140, 30, 15);
+    
+    // Coin icon
+    const coinIcon = this.add.circle(-50, 0, 12, 0xffd700);
+    coinIcon.setStrokeStyle(2, 0xffa500);
+    
+    // Coin text
+    const coinText = this.add.text(0, 0, this.gameState.coins.toString(), {
+      fontSize: '20px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    
+    this.coinDisplay.add([coinBg, coinIcon, coinText]);
+  }
+  
+  private createProgressBar(): void {
+    const barWidth = 300;
+    const barHeight = 10;
+    const x = (this.scale.width - barWidth) / 2;
+    const y = 120;
+    
+    this.progressBar = this.add.graphics();
+    
+    // Background
+    this.progressBar.fillStyle(0x333333, 0.8);
+    this.progressBar.fillRoundedRect(x, y, barWidth, barHeight, 5);
+    
+    // Progress fill
+    const progress = this.levelSystem.getLevelProgress(this.gameState.completedLevels);
+    this.progressBar.fillStyle(0x10b981, 1);
+    this.progressBar.fillRoundedRect(x, y, barWidth * progress, barHeight, 5);
+    
+    // Progress text
+    const progressText = `${this.gameState.completedLevels.size} / 147 Levels Complete`;
+    this.add.text(
+      this.scale.width / 2,
+      y + barHeight + 20,
+      progressText,
+      {
+        fontSize: '16px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#cccccc'
+      }
+    ).setOrigin(0.5);
+  }
+  
+  private createLevelGrid(): void {
+    this.levelContainer = this.add.container(0, 180);
+    
+    const startX = 80;
+    const startY = 20;
+    const spacing = 60;
+    const cols = 5;
+    const rows = 3;
+    
+    const startLevel = this.currentPage * this.levelsPerPage + 1;
+    const endLevel = Math.min(startLevel + this.levelsPerPage - 1, 147);
+    
+    let levelIndex = 0;
+    
+    for (let level = startLevel; level <= endLevel; level++) {
+      const row = Math.floor(levelIndex / cols);
+      const col = levelIndex % cols;
+      const x = startX + col * spacing;
+      const y = startY + row * spacing;
+      
+      this.createLevelButton(level, x, y);
+      levelIndex++;
+    }
+  }
+  
+  private createLevelButton(levelNumber: number, x: number, y: number): void {
+    const levelData = this.levelSystem.getLevel(levelNumber);
+    if (!levelData) return;
+    
+    const isCompleted = this.gameState.completedLevels.has(levelNumber);
+    const isUnlocked = levelNumber === 1 || this.gameState.completedLevels.has(levelNumber - 1);
+    const canPlay = isUnlocked && !isCompleted;
+    
+    // Button container
+    const buttonContainer = this.add.container(x, y);
+    
+    // Button background
+    const buttonBg = this.add.graphics();
+    let bgColor = 0x333333; // Locked
+    let borderColor = 0x555555;
+    
+    if (isCompleted) {
+      bgColor = 0x10b981; // Completed - green
+      borderColor = 0x047857;
+    } else if (isUnlocked) {
+      bgColor = 0x047857; // Available - dark green
+      borderColor = 0x10b981;
+    }
+    
+    buttonBg.fillStyle(bgColor, 0.9);
+    buttonBg.fillRoundedRect(-25, -25, 50, 50, 8);
+    buttonBg.lineStyle(2, borderColor);
+    buttonBg.strokeRoundedRect(-25, -25, 50, 50, 8);
+    
+    // Level number
+    const levelText = this.add.text(0, -5, levelNumber.toString(), {
+      fontSize: '18px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    
+    // Difficulty stars
+    const starY = 12;
+    const starSpacing = 6;
+    const starCount = Math.min(levelData.difficulty, 5);
+    const startX = -(starCount - 1) * starSpacing / 2;
+    
+    for (let i = 0; i < starCount; i++) {
+      const star = this.add.text(
+        startX + i * starSpacing,
+        starY,
+        '★',
+        {
+          fontSize: '8px',
+          color: '#ffd700'
+        }
+      ).setOrigin(0.5);
+      buttonContainer.add(star);
+    }
+    
+    buttonContainer.add([buttonBg, levelText]);
+    this.levelContainer.add(buttonContainer);
+    
+    // Add interactivity
+    if (canPlay || isCompleted) {
+      buttonContainer.setInteractive(
+        new Phaser.Geom.Rectangle(-25, -25, 50, 50),
+        Phaser.Geom.Rectangle.Contains
+      );
+      
+      buttonContainer.on('pointerover', () => {
+        buttonBg.clear();
+        buttonBg.fillStyle(bgColor, 1);
+        buttonBg.fillRoundedRect(-25, -25, 50, 50, 8);
+        buttonBg.lineStyle(3, 0xffd700);
+        buttonBg.strokeRoundedRect(-25, -25, 50, 50, 8);
+        
+        this.tweens.add({
+          targets: buttonContainer,
+          scaleX: 1.1,
+          scaleY: 1.1,
+          duration: 100
+        });
+      });
+      
+      buttonContainer.on('pointerout', () => {
+        buttonBg.clear();
+        buttonBg.fillStyle(bgColor, 0.9);
+        buttonBg.fillRoundedRect(-25, -25, 50, 50, 8);
+        buttonBg.lineStyle(2, borderColor);
+        buttonBg.strokeRoundedRect(-25, -25, 50, 50, 8);
+        
+        this.tweens.add({
+          targets: buttonContainer,
+          scaleX: 1,
+          scaleY: 1,
+          duration: 100
+        });
+      });
+      
+      buttonContainer.on('pointerdown', () => {
+        this.startLevel(levelNumber);
+      });
+    }
+    
+    // Add lock icon for locked levels
+    if (!isUnlocked) {
+      const lockIcon = this.add.text(0, 0, '🔒', {
+        fontSize: '16px'
+      }).setOrigin(0.5);
+      buttonContainer.add(lockIcon);
+    }
+    
+    // Add completion checkmark
+    if (isCompleted) {
+      const checkmark = this.add.text(18, -18, '✓', {
+        fontSize: '14px',
+        color: '#ffffff',
+        fontStyle: 'bold'
+      }).setOrigin(0.5);
+      buttonContainer.add(checkmark);
+    }
+  }
+  
+  private createNavigationButtons(): void {
+    const buttonY = this.scale.height - 80;
+    const totalPages = Math.ceil(147 / this.levelsPerPage);
+    
+    // Previous page button
+    if (this.currentPage > 0) {
+      this.prevPageButton = this.createNavButton(100, buttonY, '◀ Previous', () => {
+        this.currentPage--;
+        this.refreshLevelGrid();
+      });
+    }
+    
+    // Next page button
+    if (this.currentPage < totalPages - 1) {
+      this.nextPageButton = this.createNavButton(
+        this.scale.width - 100,
+        buttonY,
+        'Next ▶',
+        () => {
+          this.currentPage++;
+          this.refreshLevelGrid();
+        }
+      );
+    }
+    
+    // Page indicator
+    this.add.text(
+      this.scale.width / 2,
+      buttonY,
+      `Page ${this.currentPage + 1} of ${totalPages}`,
+      {
+        fontSize: '16px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#cccccc'
+      }
+    ).setOrigin(0.5);
+  }
+  
+  private createNavButton(
+    x: number,
+    y: number,
+    text: string,
+    callback: () => void
+  ): Phaser.GameObjects.Container {
+    const button = this.add.container(x, y);
+    
+    const bg = this.add.graphics();
+    bg.fillStyle(0x047857, 0.8);
+    bg.fillRoundedRect(-60, -20, 120, 40, 10);
+    bg.lineStyle(2, 0x10b981);
+    bg.strokeRoundedRect(-60, -20, 120, 40, 10);
+    
+    const buttonText = this.add.text(0, 0, text, {
+      fontSize: '16px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    
+    button.add([bg, buttonText]);
+    
+    button.setInteractive(
+      new Phaser.Geom.Rectangle(-60, -20, 120, 40),
+      Phaser.Geom.Rectangle.Contains
+    );
+    
+    button.on('pointerover', () => {
+      bg.clear();
+      bg.fillStyle(0x10b981, 1);
+      bg.fillRoundedRect(-60, -20, 120, 40, 10);
+      bg.lineStyle(2, 0xffd700);
+      bg.strokeRoundedRect(-60, -20, 120, 40, 10);
+    });
+    
+    button.on('pointerout', () => {
+      bg.clear();
+      bg.fillStyle(0x047857, 0.8);
+      bg.fillRoundedRect(-60, -20, 120, 40, 10);
+      bg.lineStyle(2, 0x10b981);
+      bg.strokeRoundedRect(-60, -20, 120, 40, 10);
+    });
+    
+    button.on('pointerdown', callback);
+    
+    return button;
+  }
+  
+  private createMenuButtons(): void {
+    const buttonY = 30;
+    
+    // Store button
+    this.storeButton = this.createMenuButton(
+      30,
+      buttonY,
+      '🏪 Store',
+      () => this.openStore()
+    );
+    
+    // Settings button
+    this.settingsButton = this.createMenuButton(
+      30,
+      buttonY + 60,
+      '⚙️ Settings',
+      () => this.openSettings()
+    );
+  }
+  
+  private createMenuButton(
+    x: number,
+    y: number,
+    text: string,
+    callback: () => void
+  ): Phaser.GameObjects.Container {
+    const button = this.add.container(x, y);
+    
+    const bg = this.add.graphics();
+    bg.fillStyle(0x2d3748, 0.9);
+    bg.fillRoundedRect(-35, -15, 70, 30, 8);
+    bg.lineStyle(1, 0x4a5568);
+    bg.strokeRoundedRect(-35, -15, 70, 30, 8);
+    
+    const buttonText = this.add.text(0, 0, text, {
+      fontSize: '12px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#ffffff'
+    }).setOrigin(0.5);
+    
+    button.add([bg, buttonText]);
+    
+    button.setInteractive(
+      new Phaser.Geom.Rectangle(-35, -15, 70, 30),
+      Phaser.Geom.Rectangle.Contains
+    );
+    
+    button.on('pointerover', () => {
+      this.tweens.add({
+        targets: button,
+        scaleX: 1.05,
+        scaleY: 1.05,
+        duration: 100
+      });
+    });
+    
+    button.on('pointerout', () => {
+      this.tweens.add({
+        targets: button,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 100
+      });
+    });
+    
+    button.on('pointerdown', callback);
+    
+    return button;
+  }
+  
+  private refreshLevelGrid(): void {
+    this.levelContainer.destroy();
+    if (this.prevPageButton) this.prevPageButton.destroy();
+    if (this.nextPageButton) this.nextPageButton.destroy();
+    
+    this.createLevelGrid();
+    this.createNavigationButtons();
+  }
+  
+  private updateDisplay(): void {
+    // Update coin display
+    const coinText = this.coinDisplay.getAt(2) as Phaser.GameObjects.Text;
+    coinText.setText(this.gameState.coins.toString());
+  }
+  
+  private startLevel(levelNumber: number): void {
+    // Add sound effect
+    // this.sound.play('button_click');
+    
+    // Transition to game scene
+    this.scene.start('GameScene', {
+      levelNumber,
+      gameState: this.gameState
+    });
+  }
+  
+  private openStore(): void {
+    this.scene.start('StoreScene', {
+      gameState: this.gameState,
+      returnScene: 'MenuScene'
+    });
+  }
+  
+  private openSettings(): void {
+    this.scene.start('SettingsScene', {
+      gameState: this.gameState,
+      returnScene: 'MenuScene'
+    });
+  }
+  
+  private createInitialGameState(): GameState {
+    return {
+      currentLevel: 1,
+      score: 0,
+      lives: 3,
+      coins: 100,
+      experience: 0,
+      completedLevels: new Set(),
+      inventory: {
+        skins: ['classic_skin'],
+        powerups: {},
+        themes: [],
+        currentSkin: 'classic_skin',
+        currentTheme: 'default'
+      },
+      settings: {
+        soundEnabled: true,
+        musicEnabled: true,
+        vibrationEnabled: true,
+        controlScheme: 'swipe',
+        difficulty: 'normal'
+      },
+      statistics: {
+        totalScore: 0,
+        gamesPlayed: 0,
+        totalPlayTime: 0,
+        foodEaten: {
+          apple: 0,
+          golden: 0,
+          speed: 0,
+          shrink: 0,
+          multi: 0,
+          power: 0,
+          mystery: 0,
+          bomb: 0,
+          freeze: 0,
+          coin: 0
+        },
+        levelsCompleted: 0,
+        longestSnake: 3,
+        perfectRuns: 0
+      }
+    };
+  }
+}
