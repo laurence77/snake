@@ -478,8 +478,8 @@ export class MenuScene extends Phaser.Scene {
     // Add sound effect
     // this.sound.play('button_click');
     
-    // Transition to game scene
-    this.scene.start('GameScene', {
+    // Transition to ultimate game scene
+    this.scene.start('UltimateSnakeScene', {
       levelNumber,
       gameState: this.gameState
     });

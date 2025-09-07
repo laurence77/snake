@@ -118,6 +118,10 @@ class UltimateSnakeScene extends Phaser.Scene {
     
     // Start background music only after a user gesture (autoplay policy)
     const enableAudio = () => {
+      // Unlock Phaser sound manager if locked (Chrome autoplay policy)
+      if ((this.sound as any).locked) {
+        (this.sound as any).unlock();
+      }
       this.soundManager.playMusic('game_theme');
     };
     this.input.once('pointerdown', enableAudio);
