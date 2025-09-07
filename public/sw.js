@@ -1,13 +1,14 @@
-const CACHE_NAME = 'snake-classic-v1';
+const CACHE_NAME = 'snake-classic-v2';
 const urlsToCache = [
   './landing.html',
   './index.html',
+  './game.html',
   './bundle.js',
+  './manifest.webmanifest',
   './assets/icons/apple.png',
   './assets/icons/snake-head.png',
   './assets/icons/controller.png',
-  './assets/icons/coin.webp',
-  '../manifest.webmanifest'
+  './assets/icons/coin.webp'
 ];
 
 // Install event - cache resources
