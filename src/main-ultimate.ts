@@ -116,8 +116,12 @@ class UltimateSnakeScene extends Phaser.Scene {
     this.setupInput();
     this.createVisualElements();
     
-    // Start background music
-    this.soundManager.playMusic('game_theme');
+    // Start background music only after a user gesture (autoplay policy)
+    const enableAudio = () => {
+      this.soundManager.playMusic('game_theme');
+    };
+    this.input.once('pointerdown', enableAudio);
+    this.input.keyboard?.once('keydown', enableAudio);
     
     // Show level intro
     this.showLevelIntro();
