@@ -266,7 +266,7 @@ class UltimateSnakeScene extends Phaser.Scene {
     this.livesBadge = this.add.text(10, 62, `(${persistLivesHUD ? 'Persist' : 'Reset'})`, {
       fontSize: '12px',
       fontFamily: 'Arial, sans-serif',
-      color: '#fbbf24',
+      color: persistLivesHUD ? '#f59e0b' : '#10b981',
       backgroundColor: '#000000',
       padding: { x: 6, y: 2 }
     });
@@ -1208,7 +1208,7 @@ class UltimateSnakeScene extends Phaser.Scene {
       {
         fontSize: '16px',
         fontFamily: 'Arial, sans-serif',
-        color: '#fbbf24',
+        color: persistLivesPause ? '#f59e0b' : '#10b981',
         stroke: '#000000',
         strokeThickness: 2,
         align: 'center'
@@ -1229,6 +1229,7 @@ class UltimateSnakeScene extends Phaser.Scene {
     // Update lives badge text in HUD
     const persistLivesHUD = this.gameState?.settings?.persistLives === true;
     this.livesBadge.setText(`(${persistLivesHUD ? 'Persist' : 'Reset'})`);
+    this.livesBadge.setColor(persistLivesHUD ? '#f59e0b' : '#10b981');
     // Combo display
     if (this.comboCount > 1) {
       this.comboText.setText(`Combo x${this.comboCount}`);

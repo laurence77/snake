@@ -93,6 +93,20 @@ export class SettingsScene extends Phaser.Scene {
       btns.push(t);
     });
 
+    // Tooltip / help text explaining lives options
+    const help = this.add.text(width / 2, height - 110,
+      'Lives behavior:\n- Reset: Start each level with 3 lives (forgiving)\n- Persist: Carry lives to next level (harder)',
+      {
+        fontSize: '14px',
+        fontFamily: 'Arial, sans-serif',
+        color: '#cccccc',
+        align: 'center',
+        lineSpacing: 6,
+        backgroundColor: '#111827',
+        padding: { x: 10, y: 8 }
+      }
+    ).setOrigin(0.5);
+
     // Back button
     const back = this.add.text(width / 2, height - 60, '← Back', {
       fontSize: '22px',
