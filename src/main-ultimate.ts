@@ -709,8 +709,9 @@ class UltimateSnakeScene extends Phaser.Scene {
   }
   
   private handleFoodCollision(food: any): void {
-    const foodId = this.foodSystem.getAllFoods().findIndex(f => f === food).toString();
-    const consumeResult = this.foodSystem.consumeFood(foodId);
+    // Resolve the actual internal food ID by position to ensure consumption works
+    const foodId = this.foodSystem.getFoodIdAtPosition({ x: food.x, y: food.y });
+    const consumeResult = foodId ? this.foodSystem.consumeFood(foodId) : { points: 0 } as any;
     
     // Update combo and apply multiplier to points
     this.comboCount += 1;

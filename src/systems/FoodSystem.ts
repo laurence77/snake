@@ -200,6 +200,16 @@ export class FoodSystem {
     );
   }
   
+  /**
+   * Get the internal food ID at a specific position
+   */
+  public getFoodIdAtPosition(position: Position): string | undefined {
+    for (const [id, food] of this.foods.entries()) {
+      if (food.x === position.x && food.y === position.y) return id;
+    }
+    return undefined;
+  }
+  
   // Private helper methods
   
   private getFoodValue(type: FoodType): number {
